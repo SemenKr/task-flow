@@ -1,36 +1,103 @@
-Todolist - Учебный проект
-📝 О проекте
-Это учебный проект Todolist, созданный в рамках обучения на курсе IT-INCUBATOR. Проект демонстрирует возможности React с TypeScript для создания интерактивного списка задач.
+# Taskfolio
 
-🚀 Технологии
-React + TypeScript
+Portfolio-ready task management app with a real backend flow, polished UI, and production-minded frontend architecture.
 
-Vite - сборщик проекта
+## Demo
 
-Hooks - управление состоянием
+Live: https://task-flow-samkr.vercel.app/
 
-Компонентный подход - модульная архитектура
+Demo credentials:
 
-📋 Функциональность
-✅ Добавление новых задач
+- Email: `free@samuraijs.com`
+- Password: `free`
 
-✅ Отметка выполненных задач
+## Why this project stands out
 
-✅ Удаление задач
+This is not a basic todo list clone. The app is built as a product-style dashboard with:
 
-✅ Фильтрация задач (All/Active/Completed)
+- authentication against the SamuraiJS API
+- RTK Query data fetching and cache invalidation
+- typed forms with `react-hook-form` + `zod`
+- responsive dashboard layout
+- light and dark theme support
+- inline task editing
+- task filtering and pagination
+- polished empty states and loading states
+- deploy-ready routing for Vercel
 
-🌐 Демо
-Посмотреть работающее приложение можно по ссылке:
-https://semenkr.github.io/todolist-01/
+## Stack
 
-🛠 Установка и запуск
-1. Установка зависимостей:
-bash
-pnpm i
-2. Запуск приложения:
-bash
+- React 19
+- TypeScript
+- Vite
+- Redux Toolkit / RTK Query
+- React Router 7
+- Tailwind CSS 4
+- Radix UI
+- React Hook Form
+- Zod
+- Vitest
+
+## Product highlights
+
+### Authentication flow
+
+Users can sign in through the public SamuraiJS backend. The app keeps auth state in sync with the API and handles captcha requests when the backend requires additional verification.
+
+### Task workspace experience
+
+Each todolist works like a focused workspace:
+
+- add tasks quickly
+- edit task titles inline
+- mark tasks as completed
+- remove tasks and workspaces
+- switch between `All`, `Active`, and `Completed`
+- paginate through remote task data
+
+### UI quality
+
+The interface was intentionally upgraded for portfolio presentation:
+
+- stronger visual hierarchy
+- cleaner typography
+- improved dashboard composition
+- better empty states
+- consistent microcopy
+- floating action button for quick workspace creation
+
+## Local run
+
+```bash
+pnpm install
 pnpm dev
-Приложение будет доступно по адресу http://localhost:3000
+```
 
-Happy coding! 🚀
+App runs on `http://localhost:3000`.
+
+## Scripts
+
+```bash
+pnpm dev
+pnpm build
+pnpm preview
+pnpm test
+```
+
+## Production notes
+
+- Build output is split into manual chunks for a cleaner production bundle.
+- The project is intended to be deployed on Vercel.
+- SPA deep links are handled through [`vercel.json`](/Users/semenkr/Project/IT-Incubator/todolist-01/vercel.json).
+- Before deploying, configure these environment variables in Vercel:
+  - `VITE_BASE_URL`
+  - `VITE_API_KEY`
+- A local template is available in [.env.example](/Users/semenkr/Project/IT-Incubator/todolist-01/.env.example).
+
+## What I would add next
+
+- drag and drop task ordering
+- optimistic updates for more mutations
+- e2e coverage with Playwright
+- workspace analytics widget
+- richer task metadata like deadlines and priorities in the UI
