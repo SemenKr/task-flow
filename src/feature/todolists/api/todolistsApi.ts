@@ -49,6 +49,14 @@ export const todolistsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Todolist"],
     }),
+    reorderTodolist: build.mutation<BaseResponse, { todolistId: string; putAfterItemId: string | null }>({
+      query: ({ todolistId, putAfterItemId }) => ({
+        url: `todo-lists/${todolistId}/reorder`,
+        method: "PUT",
+        body: { putAfterItemId },
+      }),
+      invalidatesTags: ["Todolist"],
+    }),
   }),
 })
 
@@ -57,4 +65,5 @@ export const {
   useAddTodolistMutation,
   useRemoveTodolistMutation,
   useUpdateTodolistTitleMutation,
+  useReorderTodolistMutation,
 } = todolistsApi

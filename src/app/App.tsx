@@ -32,13 +32,12 @@ export const App = () => {
     }
 
     return (
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
             <div className="min-h-screen flex flex-col bg-background">
                 <Header/>
                 <div className="flex-1 min-h-0">
                     <Routing />
                 </div>
-                {/*<Main/>*/}
                 <Toaster position={'bottom-center'} duration={700}/>
             </div>
         </ThemeProvider>

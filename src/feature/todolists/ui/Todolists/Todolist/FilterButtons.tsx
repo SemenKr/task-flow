@@ -21,18 +21,27 @@ export const FilterButtons = ({ todolist }: FilterButtonsProps) => {
 
 
     return (
-        <div className="flex gap-1 sm:gap-2">
-            <Button variant={filter === "all" ? "outline" : "ghost"}  onClick={() => changeFilter("all")}>
+        <div className="flex flex-wrap gap-1.5 rounded-2xl bg-muted/55 p-1">
+            <Button
+                size="sm"
+                variant={filter === "all" ? "outline" : "ghost"}
+                className="rounded-xl px-3"
+                onClick={() => changeFilter("all")}
+            >
                 All
             </Button>
             <Button
+                size="sm"
                 variant={filter === "active" ? "outline" : "ghost"}
+                className="rounded-xl px-3"
                 onClick={() => changeFilter("active")}
             >
                 Active
             </Button>
             <Button
+                size="sm"
                 variant={filter === "completed" ? "outline" : "ghost"}
+                className="rounded-xl px-3"
                 onClick={() => changeFilter("completed")}
             >
                 Completed

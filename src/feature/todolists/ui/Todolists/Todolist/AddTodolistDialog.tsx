@@ -1,166 +1,167 @@
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/common/components/ui/button';
-import { Input } from '@/common/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/common/components/ui/dialog';
-import { toast } from 'sonner';
+import {type ReactNode, useState} from 'react';
+import {Plus} from 'lucide-react';
+import {Button} from '@/common/components/ui/button';
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/common/components/ui/dialog';
+import {Input} from '@/common/components/ui/input';
+import {toast} from 'sonner';
 
 interface AddTodolistDialogProps {
-    onAddTodolist: (title: string) => void;
+    onAddTodolist: (title: string) => Promise<unknown> | unknown
+    trigger?: ReactNode
+    showFloatingButton?: boolean
 }
 
-export const AddTodolistDialog = ({ onAddTodolist }: AddTodolistDialogProps) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleOpen = () => {
-        setIsOpen(true);
-        setInputValue('');
-    };
+export const AddTodolistDialog = ({
+    onAddTodolist,
+    trigger,
+    showFloatingButton = false,
+}: AddTodolistDialogProps) => {
+    const [isOpen, setIsOpen] = useState(false)
+    const [inputValue, setInputValue] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const handleClose = () => {
         if (!isSubmitting) {
-            setIsOpen(false);
-            setInputValue('');
+            setIsOpen(false)
+            setInputValue('')
         }
-    };
+    }
+
+    const handleOpenChange = (open: boolean) => {
+        if (!open && isSubmitting) {
+            return
+        }
+        setIsOpen(open)
+        if (!open) {
+            setInputValue('')
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault()
 
-        const trimmedValue = inputValue.trim();
+        const trimmedValue = inputValue.trim()
 
         if (!trimmedValue) {
-            toast.error('Введите название списка');
-            return;
+            toast.error('Enter a list name')
+            return
         }
 
         if (trimmedValue.length < 2) {
-            toast.error('Название должно содержать минимум 2 символа');
-            return;
+            toast.error('List name must be at least 2 characters long')
+            return
         }
 
         if (trimmedValue.length > 50) {
-            toast.error('Название слишком длинное (макс. 50 символов)');
-            return;
+            toast.error('List name is too long (max 50 characters)')
+            return
         }
 
-        setIsSubmitting(true);
+        setIsSubmitting(true)
 
         try {
-            await onAddTodolist(trimmedValue);
-            toast.success(`Список "${trimmedValue}" создан!`);
-            handleClose();
+            await onAddTodolist(trimmedValue)
+            toast.success(`List "${trimmedValue}" created`)
+            handleClose()
         } catch (error) {
-            toast.error('Ошибка при создании списка');
-            console.error('Error adding todolist:', error);
+            toast.error('Failed to create list')
+            console.error('Error adding todolist:', error)
         } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false)
         }
-    };
+    }
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit(e);
+            e.preventDefault()
+            handleSubmit(e)
         }
 
         if (e.key === 'Escape') {
-            handleClose();
+            handleClose()
         }
-    };
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
+        const value = e.target.value
         if (value.length <= 50) {
-            setInputValue(value);
+            setInputValue(value)
         }
-    };
+    }
 
-    const charactersLeft = 50 - inputValue.length;
+    const charactersLeft = 50 - inputValue.length
 
     return (
-        <>
-            {/* Floating Action Button */}
-            <Button
-                onClick={handleOpen}
-                size="lg"
-                className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50"
-            >
-                <Plus className="h-6 w-6" />
-                <span className="sr-only">Добавить новый список</span>
-            </Button>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+            {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
+            {showFloatingButton ? (
+                <DialogTrigger asChild>
+                    <Button
+                        size="icon-lg"
+                        className="fixed right-5 bottom-5 z-50 size-14 rounded-full shadow-[0_20px_60px_-20px_rgba(15,23,42,0.45)] transition-transform duration-300 hover:-translate-y-1 sm:right-8 sm:bottom-8"
+                    >
+                        <Plus className="h-6 w-6" />
+                        <span className="sr-only">Create a new list</span>
+                    </Button>
+                </DialogTrigger>
+            ) : null}
 
-            {/* Dialog */}
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Plus className="h-5 w-5" />
-                            Создать новый список
+            <DialogContent className="overflow-hidden border-border/60 p-0 sm:max-w-lg">
+                <div className="border-b border-border/60 bg-muted/35 px-6 py-5">
+                    <DialogHeader className="gap-3 text-left">
+                        <DialogTitle className="flex items-center gap-2 text-2xl font-semibold">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                                <Plus className="h-5 w-5" />
+                            </span>
+                            Create a new list
                         </DialogTitle>
-                        <DialogDescription>
-                            Введите название для вашего нового списка задач
+                        <DialogDescription className="max-w-md text-sm leading-6">
+                            Start a focused list for personal tasks, sprint work, or feature planning.
                         </DialogDescription>
                     </DialogHeader>
+                </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="px-6 py-6">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
                             <Input
-                                placeholder="Введите название списка..."
+                                placeholder="Example: Product launch checklist"
                                 value={inputValue}
                                 onChange={handleInputChange}
                                 onKeyDown={handleKeyPress}
-                                className="text-base h-12"
+                                className="h-12 text-base"
                                 disabled={isSubmitting}
                                 autoFocus
                             />
-                            {inputValue.length > 0 && (
-                                <div className="text-xs text-muted-foreground text-right">
-                                    {charactersLeft} символов осталось
-                                </div>
-                            )}
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>Short, specific names work best.</span>
+                                <span>{charactersLeft} characters left</span>
+                            </div>
                         </div>
 
-                        <div className="flex gap-2 justify-end">
+                        <div className="rounded-2xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                            Keep separate lists for focused areas of work. Add tasks inside each list card after creation.
+                        </div>
+
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleClose}
                                 disabled={isSubmitting}
                             >
-                                Отмена
+                                Cancel
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={!inputValue.trim() || isSubmitting}
                             >
-                                {isSubmitting ? (
-                                    <>
-                                        <div className="h-4 w-4 border-2 border-current border-r-transparent rounded-full animate-spin mr-2" />
-                                        Создание...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Создать
-                                    </>
-                                )}
+                                {isSubmitting ? 'Creating...' : 'Create list'}
                             </Button>
                         </div>
                     </form>
-
-                    {/* Подсказки */}
-                    <div className="pt-4 border-t border-border">
-                        <div className="text-xs text-muted-foreground space-y-1">
-                            <div>💡 Нажмите Enter для быстрого создания</div>
-                            <div>💡 Нажмите Escape для отмены</div>
-                            <div>📝 Минимум 2 символа в названии</div>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
-        </>
-    );
-};
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}

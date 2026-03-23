@@ -120,8 +120,25 @@ export const tasksApi = baseApi.injectEndpoints({
         // этот refetch можно убрать
         invalidatesTags: (_result, _error, { taskId }) => [{ type: "Task", id: taskId }],
       }),
+      reorderTask: build.mutation<
+          BaseResponse,
+          { todolistId: string; taskId: string; putAfterItemId: string | null }
+      >({
+        query: ({ todolistId, taskId, putAfterItemId }) => ({
+          url: `todo-lists/${todolistId}/tasks/${taskId}/reorder`,
+          method: "PUT",
+          body: { putAfterItemId },
+        }),
+        invalidatesTags: (_result, _error, { todolistId }) => [{ type: "Task", id: `LIST-${todolistId}` }],
+      }),
     }
   },
 })
 
-export const { useGetTasksQuery, useAddTaskMutation, useRemoveTaskMutation, useUpdateTaskMutation } = tasksApi
+export const {
+  useGetTasksQuery,
+  useAddTaskMutation,
+  useRemoveTaskMutation,
+  useUpdateTaskMutation,
+  useReorderTaskMutation,
+} = tasksApi

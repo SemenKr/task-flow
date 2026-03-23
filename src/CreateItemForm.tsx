@@ -28,17 +28,18 @@ export const CreateItemForm = ({onAdd, placeholder, disabled = false}: CreateIte
         <>
             <div className="flex gap-2">
                 <Input
-                    placeholder={placeholder ?? "Введите текст..."}
+                    placeholder={placeholder ?? "Type something meaningful..."}
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     onKeyDown={onEnter}
                     disabled={disabled}
+                    className="h-10 rounded-2xl text-sm"
                 />
 
-                <Button disabled={disabled || !value.trim()} onClick={add}>
-                    <Plus className="h-5 w-5" />
+                <Button disabled={disabled || !value.trim()} onClick={add} className="h-10 rounded-2xl px-3.5">
+                    <Plus className="h-4.5 w-4.5" />
                 </Button>
             </div>
         </>
     );
-};
+}
