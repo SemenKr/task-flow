@@ -1,5 +1,4 @@
 import {setIsLoggedInAC} from '@/app/appSlice';
-import {AUTH_TOKEN} from '@/common/constants'
 import {Alert, AlertDescription} from '@/common/components/ui/alert';
 import {Badge} from '@/common/components/ui/badge';
 import {Button} from '@/common/components/ui/button';
@@ -9,6 +8,7 @@ import {Input} from '@/common/components/ui/input';
 import {Label} from '@/common/components/ui/label';
 import {ResultCode} from '@/common/enums'
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
+import {setStoredAuthToken} from '@/common/utils/authStorage';
 import {useLazyGetCaptchaUrlQuery, useLoginMutation} from '@/feature/auth/api/authApi';
 import {type LoginInputs, loginSchema} from '@/feature/auth/lib/schemas';
 import {zodResolver} from '@hookform/resolvers/zod'
@@ -42,7 +42,7 @@ export const Login = () => {
 
         if ('data' in res && res.data?.resultCode === ResultCode.Success) {
             dispatch(setIsLoggedInAC({isLoggedIn: true}))
-            localStorage.setItem(AUTH_TOKEN, res.data.data.token)
+            setStoredAuthToken(res.data.data.token, Boolean(data.rememberMe))
             setCaptchaUrl(null)
             reset()
         }

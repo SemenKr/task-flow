@@ -1,5 +1,5 @@
 import {setAppErrorAC} from '@/app/appSlice';
-import { AUTH_TOKEN } from "@/common/constants"
+import {clearStoredAuthToken, getStoredAuthToken} from '@/common/utils/authStorage';
 import {handleError} from '@/common/utils/handleError';
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
@@ -28,7 +28,7 @@ export const baseApi = createApi({
 
             // 🔐 Динамическое добавление JWT токена в каждый запрос
             prepareHeaders: (headers) => {
-                const token = localStorage.getItem(AUTH_TOKEN)
+                const token = getStoredAuthToken()
 
                 if (token) {
                     headers.set("Authorization", `Bearer ${token}`)
@@ -41,7 +41,7 @@ export const baseApi = createApi({
         // 🚨 Если сервер вернул 401 — токен невалиден или истёк
         // Удаляем его из localStorage (можно дополнительно инициировать logout)
         if (result.error?.status === 401) {
-            localStorage.removeItem(AUTH_TOKEN)
+            clearStoredAuthToken()
         }
 
         // ⚠️ Глобальная обработка ошибок (показ уведомлений и т.д.)

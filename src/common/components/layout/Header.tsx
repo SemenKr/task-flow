@@ -1,6 +1,5 @@
 import {selectAppStatus, selectIsLoggedIn, setIsLoggedInAC} from '@/app/appSlice';
 import {baseApi} from '@/app/baseApi';
-import {AUTH_TOKEN} from '@/common/constants';
 import {ResultCode} from '@/common/enums';
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
 import {useAppSelector} from '@/common/hooks/useAppSelector';
@@ -8,6 +7,7 @@ import {Badge} from '@/common/components/ui/badge.tsx';
 import {Button} from '@/common/components/ui/button.tsx';
 import {LinearProgress} from '@/common/components/ui'
 import {cn} from '@/common/lib/utils.ts'
+import {clearStoredAuthToken} from '@/common/utils/authStorage';
 import {ModeToggle} from '@/components/mode-toggle.tsx'
 import {useLogoutMutation} from '@/feature/auth/api/authApi';
 import {ListTodo} from 'lucide-react';
@@ -25,7 +25,7 @@ export const Header = () => {
             .then((res) => {
                 if (res.data?.resultCode === ResultCode.Success) {
                     dispatch(setIsLoggedInAC({ isLoggedIn: false }))
-                    localStorage.removeItem(AUTH_TOKEN)
+                    clearStoredAuthToken()
                 }
             })
             .then(() => {
