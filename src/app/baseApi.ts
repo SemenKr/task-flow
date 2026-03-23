@@ -18,7 +18,7 @@ export const baseApi = createApi({
     baseQuery: async (args, api, extraOptions) => {
         // 🌐 Создаём базовый запрос с конфигурацией
         const result = await fetchBaseQuery({
-            baseUrl: import.meta.env.VITE_BASE_URL,
+            baseUrl: "/samurai-api",
             // разрешить браузеру работать с cookies при запросах к API
             credentials: "include",
             // 🔑 Статический API-KEY для всех запросов
