@@ -2,12 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/samurai-api/(.*)",
-      "destination": "/api/samurai/$1"
+      "source": "/samurai-api/:path*",
+      "destination": "https://social-network.samuraijs.com/api/1.1/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path((?!samurai-api/).*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/samurai-api/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ]
 }
