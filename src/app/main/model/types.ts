@@ -12,6 +12,7 @@ export type TaskStats = {
     total: number
     completed: number
     overdue: number
+    today: number
 }
 
 export type TaskStatsByListId = Record<string, TaskStats>
@@ -25,6 +26,8 @@ export type SidebarFiltersModel = {
     }
     hasActiveGlobalTaskFilters: boolean
     activeFiltersCount: number
+    matchedTasksCount: number
+    totalTasksCount: number
     onUpdateGlobalTaskFilters: (nextFilters: Partial<{
         query: string
         status: GlobalTaskStatusFilter

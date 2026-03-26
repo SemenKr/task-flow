@@ -15,6 +15,7 @@ export const TodolistsSidebar = (props: TodolistsSidebarProps) => (
             onAddTodolist={props.onAddTodolist}
             filters={props.filters}
             listNavigation={props.listNavigation}
+            stats={props.stats}
         />
         <DesktopTodolistsSidebar
             onAddTodolist={props.onAddTodolist}

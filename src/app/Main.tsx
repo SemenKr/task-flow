@@ -1,6 +1,7 @@
 import {EmptyTodolistsState} from '@/feature/todolists/ui/Todolists/EmptyTodolistsState/EmptyTodolistsState';
 import {useAddTodolistMutation, useGetTodolistsQuery, useReorderTodolistMutation} from '@/feature/todolists/api/todolistsApi';
 import {useAddTaskMutation} from '@/feature/todolists/api/tasksApi';
+import {AddTodolistDialog} from '@/feature/todolists/ui/Todolists/Todolist/AddTodolistDialog';
 import {TodolistItem} from '@/feature/todolists/ui/Todolists/TodolistItem/TodolistItem'
 import type {GlobalTaskFilters} from '@/feature/todolists/libs/types';
 import {useCallback, useEffect, useMemo, useState} from 'react';
@@ -180,9 +181,18 @@ export const TodolistsPage = () => {
         globalTaskFilters,
         hasActiveGlobalTaskFilters: hasActiveTaskFilters,
         activeFiltersCount: getActiveGlobalTaskFiltersCount(globalTaskFilters),
+        matchedTasksCount: aggregatedTaskStats.matched,
+        totalTasksCount: aggregatedTaskStats.total,
         onUpdateGlobalTaskFilters: updateGlobalTaskFilters,
         onResetGlobalTaskFilters: resetGlobalTaskFilters,
-    }), [globalTaskFilters, hasActiveTaskFilters, resetGlobalTaskFilters, updateGlobalTaskFilters])
+    }), [
+        aggregatedTaskStats.matched,
+        aggregatedTaskStats.total,
+        globalTaskFilters,
+        hasActiveTaskFilters,
+        resetGlobalTaskFilters,
+        updateGlobalTaskFilters,
+    ])
 
     const sidebarListNavigation = useMemo<SidebarListNavigationModel>(() => ({
         searchValue,
@@ -265,6 +275,14 @@ export const TodolistsPage = () => {
                     )}
                 </section>
             </div>
+
+            {hasTodolists ? (
+                <AddTodolistDialog
+                    onAddTodolist={handleAddTodolist}
+                    showFloatingButton
+                    floatingButtonClassName="lg:hidden"
+                />
+            ) : null}
         </main>
     )
 }

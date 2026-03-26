@@ -8,7 +8,8 @@ const areTaskStatsEqual = (current: TaskStats | undefined, next: TaskStats) => (
         current.matched === next.matched &&
         current.total === next.total &&
         current.completed === next.completed &&
-        current.overdue === next.overdue,
+        current.overdue === next.overdue &&
+        current.today === next.today,
     )
 )
 
@@ -19,6 +20,7 @@ export const aggregateTaskStats = (statsByListId: TaskStatsByListId): TaskStats 
             total: acc.total + stats.total,
             completed: acc.completed + stats.completed,
             overdue: acc.overdue + stats.overdue,
+            today: acc.today + stats.today,
         }),
         { ...EMPTY_TASK_STATS },
     )

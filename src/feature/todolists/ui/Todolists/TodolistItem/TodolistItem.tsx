@@ -13,6 +13,7 @@ import {Tasks} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/Tasks.t
 import {Check, Edit2, FolderKanban, Trash2, X} from 'lucide-react';
 import {KeyboardEvent, useEffect, useState} from 'react';
 import {toast} from 'sonner';
+import type {TaskStats} from '@/app/main/model/types';
 
 type TodolistItemPropsType = {
     todolist: DomainTodolist
@@ -21,7 +22,7 @@ type TodolistItemPropsType = {
     totalTasksCount?: number
     selected?: boolean
     onSelect?: () => void
-    onTasksStatsChange?: (stats: { matched: number; total: number; completed: number; overdue: number }) => void
+    onTasksStatsChange?: (stats: TaskStats) => void
 }
 
 export const TodolistItem = ({

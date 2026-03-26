@@ -3,18 +3,21 @@ import {Plus} from 'lucide-react';
 import {Button} from '@/common/components/ui/button';
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/common/components/ui/dialog';
 import {Input} from '@/common/components/ui/input';
+import {cn} from '@/common/lib/utils';
 import {toast} from 'sonner';
 
 interface AddTodolistDialogProps {
     onAddTodolist: (title: string) => Promise<unknown> | unknown
     trigger?: ReactNode
     showFloatingButton?: boolean
+    floatingButtonClassName?: string
 }
 
 export const AddTodolistDialog = ({
     onAddTodolist,
     trigger,
     showFloatingButton = false,
+    floatingButtonClassName,
 }: AddTodolistDialogProps) => {
     const [isOpen, setIsOpen] = useState(false)
     const [inputValue, setInputValue] = useState('')
@@ -98,7 +101,10 @@ export const AddTodolistDialog = ({
                 <DialogTrigger asChild>
                     <Button
                         size="icon-lg"
-                        className="fixed right-5 bottom-5 z-50 size-14 rounded-full shadow-[0_20px_60px_-20px_rgba(15,23,42,0.45)] transition-transform duration-300 hover:-translate-y-1 sm:right-8 sm:bottom-8"
+                        className={cn(
+                            'fixed right-5 bottom-5 z-50 size-14 rounded-full shadow-[0_20px_60px_-20px_rgba(15,23,42,0.45)] transition-transform duration-300 hover:-translate-y-1 sm:right-8 sm:bottom-8',
+                            floatingButtonClassName,
+                        )}
                     >
                         <Plus className="h-6 w-6" />
                         <span className="sr-only">Create a new list</span>

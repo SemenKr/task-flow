@@ -19,6 +19,7 @@ export const EMPTY_TASK_STATS: TaskStats = {
     total: 0,
     completed: 0,
     overdue: 0,
+    today: 0,
 }
 
 export const GLOBAL_STATUS_OPTIONS: FilterOption<GlobalTaskStatusFilter>[] = [

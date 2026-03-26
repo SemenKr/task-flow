@@ -9,11 +9,12 @@ import {TaskItem} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/Task
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {useEffect, useState} from 'react';
 import {toast} from 'sonner';
+import type {TaskStats} from '@/app/main/model/types';
 
 type TasksPropsType = {
     todolist: DomainTodolist
     globalTaskFilters: GlobalTaskFilters
-    onStatsChange?: (stats: { matched: number; total: number; completed: number; overdue: number }) => void
+    onStatsChange?: (stats: TaskStats) => void
 }
 
 type TasksPaginationPropsType = {
@@ -227,6 +228,7 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
     const totalTasksCount = data?.totalCount ?? 0
     const completedTasksCount = filteredTasks?.filter((task) => task.status === TaskStatus.Completed).length ?? 0
     const overdueTasksCount = filteredTasks?.filter((task) => matchesDueFilter('overdue', task.deadline)).length ?? 0
+    const todayTasksCount = filteredTasks?.filter((task) => matchesDueFilter('today', task.deadline)).length ?? 0
 
     useEffect(() => {
         onStatsChange?.({
@@ -234,8 +236,9 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
             total: totalTasksCount,
             completed: completedTasksCount,
             overdue: overdueTasksCount,
+            today: todayTasksCount,
         })
-    }, [completedTasksCount, matchedTasksCount, onStatsChange, overdueTasksCount, totalTasksCount])
+    }, [completedTasksCount, matchedTasksCount, onStatsChange, overdueTasksCount, todayTasksCount, totalTasksCount])
 
     const reorderEnabled = filter === 'all'
 
