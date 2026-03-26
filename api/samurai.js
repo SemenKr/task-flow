@@ -1,4 +1,5 @@
 const TARGET_ORIGIN = "https://social-network.samuraijs.com/api/1.1"
+const BODYLESS_METHODS = new Set(["GET", "HEAD"])
 
 const FORWARDED_REQUEST_HEADERS = new Set([
   "accept",
@@ -15,18 +16,16 @@ const RESPONSE_HEADERS_TO_SKIP = new Set([
   "transfer-encoding",
 ])
 
-function normalizePath(pathValue) {
-  if (Array.isArray(pathValue)) {
-    return pathValue.join("/")
+function appendHeaderValue(headers, name, value) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => headers.append(name, item))
+    return
   }
 
-  return pathValue ?? ""
+  headers.set(name, value)
 }
 
-function buildTargetUrl(pathValue, query) {
-  const pathname = normalizePath(pathValue)
-  const url = new URL(`${TARGET_ORIGIN}/${pathname}`)
-
+function appendQueryParams(url, query) {
   for (const [key, value] of Object.entries(query)) {
     if (key === "path" || value == null) {
       continue
@@ -39,7 +38,15 @@ function buildTargetUrl(pathValue, query) {
 
     url.searchParams.append(key, value)
   }
+}
 
+function getTargetPath(pathValue) {
+  return Array.isArray(pathValue) ? pathValue.join("/") : pathValue ?? ""
+}
+
+function buildTargetUrl(pathValue, query) {
+  const url = new URL(`${TARGET_ORIGIN}/${getTargetPath(pathValue)}`)
+  appendQueryParams(url, query)
   return url
 }
 
@@ -57,19 +64,14 @@ function createUpstreamHeaders(sourceHeaders) {
       continue
     }
 
-    if (Array.isArray(value)) {
-      value.forEach((item) => headers.append(name, item))
-      continue
-    }
-
-    headers.set(name, value)
+    appendHeaderValue(headers, name, value)
   }
 
   return headers
 }
 
 function getRequestBody(req) {
-  if (req.method === "GET" || req.method === "HEAD") {
+  if (BODYLESS_METHODS.has(req.method)) {
     return undefined
   }
 
@@ -84,8 +86,17 @@ function getRequestBody(req) {
   return JSON.stringify(req.body)
 }
 
-function copyResponseHeaders(upstream, res) {
-  upstream.headers.forEach((value, key) => {
+function getSetCookieHeader(upstreamHeaders) {
+  if (typeof upstreamHeaders.getSetCookie === "function") {
+    const cookies = upstreamHeaders.getSetCookie()
+    return cookies.length > 0 ? cookies : null
+  }
+
+  return upstreamHeaders.get("set-cookie")
+}
+
+function copyResponseHeaders(upstreamHeaders, res) {
+  upstreamHeaders.forEach((value, key) => {
     if (RESPONSE_HEADERS_TO_SKIP.has(key.toLowerCase())) {
       return
     }
@@ -93,18 +104,10 @@ function copyResponseHeaders(upstream, res) {
     res.setHeader(key, value)
   })
 
-  if (typeof upstream.headers.getSetCookie === "function") {
-    const cookies = upstream.headers.getSetCookie()
+  const setCookieHeader = getSetCookieHeader(upstreamHeaders)
 
-    if (cookies.length > 0) {
-      res.setHeader("set-cookie", cookies)
-    }
-  } else {
-    const cookieHeader = upstream.headers.get("set-cookie")
-
-    if (cookieHeader) {
-      res.setHeader("set-cookie", cookieHeader)
-    }
+  if (setCookieHeader) {
+    res.setHeader("set-cookie", setCookieHeader)
   }
 }
 
@@ -119,7 +122,7 @@ export default async function handler(req, res) {
       redirect: "manual",
     })
 
-    copyResponseHeaders(upstream, res)
+    copyResponseHeaders(upstream.headers, res)
     res.status(upstream.status)
     res.send(Buffer.from(await upstream.arrayBuffer()))
   } catch (error) {

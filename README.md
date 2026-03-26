@@ -90,6 +90,7 @@ pnpm test
 - The project is intended to be deployed on Vercel.
 - SPA deep links are handled through [`vercel.json`](/Users/semenkr/Project/IT-Incubator/todolist-01/vercel.json).
 - API requests are proxied through `/samurai-api` in both local dev and Vercel production to avoid SamuraiJS CORS restrictions.
+- Vercel production uses [`api/samurai.js`](/Users/semenkr/Project/IT-Incubator/todolist-01/api/samurai.js) as a proxy so SamuraiJS mutations do not depend on frontend domain whitelisting.
 - Before deploying, configure this environment variable in Vercel:
   - `VITE_API_KEY`
 - A local template is available in [.env.example](/Users/semenkr/Project/IT-Incubator/todolist-01/.env.example).
