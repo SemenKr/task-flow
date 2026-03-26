@@ -4,6 +4,7 @@ import {
     canReorderTodolists,
     filterAndSortTodolists,
     getTodolistIdsSignature,
+    hasPendingOptimisticTodolists,
     normalizeListSearchValue,
 } from './todolists';
 import type {DomainTodolist} from '@/feature/todolists/libs/types';
@@ -34,10 +35,19 @@ describe('todolists utils', () => {
     })
 
     it('allows reorder only for custom sort without search or pending request', () => {
-        expect(canReorderTodolists('custom', '', false)).toBe(true)
-        expect(canReorderTodolists('alphabetical', '', false)).toBe(false)
-        expect(canReorderTodolists('custom', 'alpha', false)).toBe(false)
-        expect(canReorderTodolists('custom', '', true)).toBe(false)
+        expect(canReorderTodolists('custom', '', false, false)).toBe(true)
+        expect(canReorderTodolists('alphabetical', '', false, false)).toBe(false)
+        expect(canReorderTodolists('custom', 'alpha', false, false)).toBe(false)
+        expect(canReorderTodolists('custom', '', true, false)).toBe(false)
+        expect(canReorderTodolists('custom', '', false, true)).toBe(false)
+    })
+
+    it('detects pending optimistic todolists', () => {
+        expect(hasPendingOptimisticTodolists(todolists)).toBe(false)
+        expect(hasPendingOptimisticTodolists([
+            ...todolists,
+            createTodolist('temp-1', 'Loading board', '2025-01-04T00:00:00.000Z'),
+        ].map((list) => list.id === 'temp-1' ? {...list, entityStatus: 'loading'} : list))).toBe(true)
     })
 
     it('applies preview order and creates ids signature', () => {

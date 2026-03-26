@@ -19,11 +19,21 @@ const getTodolistSortValue = (sortValue: ListSortValue, firstList: DomainTodolis
 
 export const normalizeListSearchValue = (searchValue: string) => searchValue.trim().toLowerCase()
 
+export const hasPendingOptimisticTodolists = (todolists: DomainTodolist[] | undefined) => (
+    Boolean(todolists?.some((list) => list.entityStatus === 'loading'))
+)
+
 export const canReorderTodolists = (
     sortValue: ListSortValue,
     normalizedSearchValue: string,
     isReorderingLists: boolean,
-) => sortValue === 'custom' && normalizedSearchValue.length === 0 && !isReorderingLists
+    hasPendingOptimisticTodolist: boolean,
+) => (
+    sortValue === 'custom' &&
+    normalizedSearchValue.length === 0 &&
+    !isReorderingLists &&
+    !hasPendingOptimisticTodolist
+)
 
 export const filterAndSortTodolists = (
     todolists: DomainTodolist[] | undefined,

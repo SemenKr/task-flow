@@ -14,7 +14,12 @@ import {
     hasActiveGlobalTaskFilters,
 } from '@/app/main/lib/globalTaskFilters';
 import {aggregateTaskStats, syncTaskStatsByListId, upsertTaskStats} from '@/app/main/lib/taskStats';
-import {canReorderTodolists, filterAndSortTodolists, normalizeListSearchValue} from '@/app/main/lib/todolists';
+import {
+    canReorderTodolists,
+    filterAndSortTodolists,
+    hasPendingOptimisticTodolists,
+    normalizeListSearchValue,
+} from '@/app/main/lib/todolists';
 import {useTodolistsOnboarding} from '@/app/main/lib/useTodolistsOnboarding';
 import {useSyncedSelectedList} from '@/app/main/lib/useSyncedSelectedList';
 import {useTodolistsReorder} from '@/app/main/lib/useTodolistsReorder';
@@ -62,13 +67,22 @@ export const TodolistsPage = () => {
         () => normalizeListSearchValue(searchValue),
         [searchValue],
     )
-    const dragListsEnabled = useMemo(
-        () => canReorderTodolists(sortValue, normalizedSearchValue, isReorderingLists),
-        [isReorderingLists, normalizedSearchValue, sortValue],
-    )
     const visibleTodolists = useMemo(
         () => filterAndSortTodolists(todolists, normalizedSearchValue, sortValue),
         [normalizedSearchValue, sortValue, todolists],
+    )
+    const hasPendingOptimisticTodolist = useMemo(
+        () => hasPendingOptimisticTodolists(visibleTodolists),
+        [visibleTodolists],
+    )
+    const dragListsEnabled = useMemo(
+        () => canReorderTodolists(
+            sortValue,
+            normalizedSearchValue,
+            isReorderingLists,
+            hasPendingOptimisticTodolist,
+        ),
+        [hasPendingOptimisticTodolist, isReorderingLists, normalizedSearchValue, sortValue],
     )
     const {
         displayTodolists,

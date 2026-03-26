@@ -3,12 +3,59 @@ import type { BaseResponse } from "@/common/types"
 import type {DomainTodolist} from '@/feature/todolists/libs/types';
 import type { Todolist } from "./todolistsApi.types"
 
+const toDomainTodolist = (todolist: Todolist): DomainTodolist => ({
+  ...todolist,
+  filter: "all",
+  entityStatus: "idle",
+})
+
+const createOptimisticTodolist = (title: string, tempId: string): DomainTodolist => ({
+  id: tempId,
+  title,
+  addedDate: new Date().toISOString(),
+  order: 0,
+  filter: "all",
+  entityStatus: "loading",
+})
+
+const moveTodolistInCache = (
+    state: DomainTodolist[],
+    todolistId: string,
+    putAfterItemId: string | null,
+) => {
+  const sourceIndex = state.findIndex((todolist) => todolist.id === todolistId)
+
+  if (sourceIndex === -1) {
+    return
+  }
+
+  const [movedTodolist] = state.splice(sourceIndex, 1)
+
+  if (!movedTodolist) {
+    return
+  }
+
+  if (putAfterItemId === null) {
+    state.unshift(movedTodolist)
+    return
+  }
+
+  const targetIndex = state.findIndex((todolist) => todolist.id === putAfterItemId)
+
+  if (targetIndex === -1) {
+    state.splice(sourceIndex, 0, movedTodolist)
+    return
+  }
+
+  state.splice(targetIndex + 1, 0, movedTodolist)
+}
+
 export const todolistsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getTodolists: build.query<DomainTodolist[], void>({
       query: () => "todo-lists",
       transformResponse: (todolists: Todolist[]): DomainTodolist[] =>
-          todolists.map((todolist) => ({ ...todolist, filter: "all", entityStatus: "idle" })),
+          todolists.map(toDomainTodolist),
       providesTags: ["Todolist"],
     }),
     addTodolist: build.mutation<BaseResponse<{ item: Todolist }>, string>({
@@ -19,51 +66,29 @@ export const todolistsApi = baseApi.injectEndpoints({
       }),
 
       async onQueryStarted(title, { dispatch, queryFulfilled }) {
-        // 🆕 создаём временный id
         const tempId = `temp-${Date.now()}`
-
-        // 🧠 создаём временный todolist
-        const newTodolist: DomainTodolist = {
-          id: tempId,
-          title,
-          addedDate: new Date().toISOString(),
-          order: 0,
-          filter: "all",
-          entityStatus: "loading", // можно показать spinner
-        }
-
-        // 🛠 добавляем в кэш
         const patchResult = dispatch(
             todolistsApi.util.updateQueryData("getTodolists", undefined, (state) => {
-              state.unshift(newTodolist)
+              state.unshift(createOptimisticTodolist(title, tempId))
             }),
         )
 
         try {
           const { data } = await queryFulfilled
-
-          const real = data.data.item
-
-          // 🔁 заменяем temp на реальный
           dispatch(
               todolistsApi.util.updateQueryData("getTodolists", undefined, (state) => {
                 const index = state.findIndex((t) => t.id === tempId)
                 if (index !== -1) {
-                  state[index] = {
-                    ...real,
-                    filter: "all",
-                    entityStatus: "idle",
-                  }
+                  state[index] = toDomainTodolist(data.data.item)
                 }
               }),
           )
         } catch {
-          // ❌ откат
           patchResult.undo()
         }
       },
 
-      // invalidatesTags: ["Todolist"],
+      invalidatesTags: ["Todolist"],
     }),
     removeTodolist: build.mutation<BaseResponse, string>({
       query: (id) => ({
@@ -111,25 +136,7 @@ export const todolistsApi = baseApi.injectEndpoints({
       ) {
         const patchResult = dispatch(
             todolistsApi.util.updateQueryData("getTodolists", undefined, (state) => {
-              const sourceIndex = state.findIndex((todolist) => todolist.id === todolistId)
-              if (sourceIndex === -1) return
-
-              const [movedTodolist] = state.splice(sourceIndex, 1)
-              if (!movedTodolist) return
-
-              if (putAfterItemId === null) {
-                state.unshift(movedTodolist)
-                return
-              }
-
-              const targetIndex = state.findIndex((todolist) => todolist.id === putAfterItemId)
-
-              if (targetIndex === -1) {
-                state.splice(sourceIndex, 0, movedTodolist)
-                return
-              }
-
-              state.splice(targetIndex + 1, 0, movedTodolist)
+              moveTodolistInCache(state, todolistId, putAfterItemId)
             })
         )
 
@@ -139,6 +146,7 @@ export const todolistsApi = baseApi.injectEndpoints({
           patchResult.undo()
         }
       },
+      invalidatesTags: ["Todolist"],
     }),
   }),
 })
