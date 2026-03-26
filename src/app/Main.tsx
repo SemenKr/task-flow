@@ -34,6 +34,7 @@ import type {
     TaskStatsByListId,
 } from '@/app/main/model/types';
 import {TodolistsPageHeader} from '@/app/main/ui/TodolistsPageHeader';
+import {TodolistsPageSkeleton} from '@/app/main/ui/TodolistsPageSkeleton';
 import {TodolistsSidebar} from '@/app/main/ui/TodolistsSidebar';
 
 export const TodolistsPage = () => {
@@ -41,7 +42,7 @@ export const TodolistsPage = () => {
     const [addTodolist] = useAddTodolistMutation()
     const [addTask] = useAddTaskMutation()
     const [reorderTodolist, { isLoading: isReorderingLists }] = useReorderTodolistMutation()
-    const { data: todolists } = useGetTodolistsQuery()
+    const { data: todolists, isLoading: isTodolistsLoading } = useGetTodolistsQuery()
     const [selectedListId, setSelectedListId] = useState<string | null>(null)
     const [searchValue, setSearchValue] = useState('')
     const [sortValue, setSortValue] = useState<ListSortValue>('custom')
@@ -247,6 +248,10 @@ export const TodolistsPage = () => {
     const sidebarStats = useMemo<SidebarStatsModel>(() => ({
         aggregatedTaskStats,
     }), [aggregatedTaskStats])
+
+    if (isTodolistsLoading) {
+        return <TodolistsPageSkeleton />
+    }
 
     return (
         <main className="relative overflow-hidden">

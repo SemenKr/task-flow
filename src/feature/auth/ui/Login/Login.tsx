@@ -6,6 +6,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/commo
 import {Checkbox} from '@/common/components/ui/checkbox';
 import {Input} from '@/common/components/ui/input';
 import {Label} from '@/common/components/ui/label';
+import {Skeleton} from '@/common/components/ui/skeleton';
 import {ResultCode} from '@/common/enums'
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
 import {setStoredAuthToken} from '@/common/utils/authStorage';
@@ -19,11 +20,12 @@ import {Controller, type SubmitHandler, useForm} from 'react-hook-form'
 export const Login = () => {
     const dispatch = useAppDispatch()
 
-    const [login] = useLoginMutation()
-    const [getCaptchaUrl] = useLazyGetCaptchaUrlQuery()
+    const [login, {isLoading: isLoggingIn}] = useLoginMutation()
+    const [getCaptchaUrl, {isFetching: isCaptchaLoading}] = useLazyGetCaptchaUrlQuery()
 
     const [captchaUrl, setCaptchaUrl] = useState<string | null>(null)
     const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+    const isAuthBusy = isLoggingIn || isCaptchaLoading
 
     const {
         register,
@@ -166,6 +168,7 @@ export const Login = () => {
                                     placeholder="email@example.com"
                                     aria-invalid={Boolean(errors.email)}
                                     className="h-11 rounded-2xl"
+                                    disabled={isAuthBusy}
                                     {...register('email')}
                                 />
                                 {errors.email && (
@@ -182,11 +185,13 @@ export const Login = () => {
                                         placeholder="••••••••"
                                         aria-invalid={Boolean(errors.password)}
                                         className="h-11 rounded-2xl pr-10"
+                                        disabled={isAuthBusy}
                                         {...register('password')}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setIsPasswordVisible((prev) => !prev)}
+                                        disabled={isAuthBusy}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                                     >
@@ -198,19 +203,30 @@ export const Login = () => {
                                 )}
                             </div>
 
-                            {captchaUrl && (
+                            {(captchaUrl || isCaptchaLoading) && (
                                 <div className="space-y-2">
-                                    <img src={captchaUrl} alt="captcha" className="h-12 rounded-lg border border-border/60" />
-                                    <Label htmlFor="captcha">Captcha</Label>
-                                    <Input
-                                        id="captcha"
-                                        placeholder="Enter captcha"
-                                        aria-invalid={Boolean(errors.captcha)}
-                                        className="h-11 rounded-2xl"
-                                        {...register('captcha')}
-                                    />
-                                    {errors.captcha && (
-                                        <p className="text-sm text-destructive">{errors.captcha.message}</p>
+                                    {isCaptchaLoading ? (
+                                        <>
+                                            <Skeleton className="h-12 w-40 rounded-lg border border-border/60" />
+                                            <Skeleton className="h-4 w-16 rounded-full" />
+                                            <Skeleton className="h-11 w-full rounded-2xl" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <img src={captchaUrl ?? undefined} alt="captcha" className="h-12 rounded-lg border border-border/60" />
+                                            <Label htmlFor="captcha">Captcha</Label>
+                                            <Input
+                                                id="captcha"
+                                                placeholder="Enter captcha"
+                                                aria-invalid={Boolean(errors.captcha)}
+                                                className="h-11 rounded-2xl"
+                                                disabled={isAuthBusy}
+                                                {...register('captcha')}
+                                            />
+                                            {errors.captcha && (
+                                                <p className="text-sm text-destructive">{errors.captcha.message}</p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -223,6 +239,7 @@ export const Login = () => {
                                         <Checkbox
                                             id="rememberMe"
                                             checked={field.value}
+                                            disabled={isAuthBusy}
                                             onCheckedChange={(checked) => field.onChange(checked === true)}
                                         />
                                     )}
@@ -238,8 +255,8 @@ export const Login = () => {
                                 </Alert>
                             )}
 
-                            <Button type="submit" className="h-11 w-full rounded-2xl">
-                                Enter dashboard
+                            <Button type="submit" className="h-11 w-full rounded-2xl" disabled={isAuthBusy}>
+                                {isLoggingIn ? 'Signing in...' : 'Enter dashboard'}
                             </Button>
                         </form>
 
