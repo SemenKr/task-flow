@@ -17,7 +17,53 @@ export const todolistsApi = baseApi.injectEndpoints({
         method: "POST",
         body: { title },
       }),
-      invalidatesTags: ["Todolist"],
+
+      async onQueryStarted(title, { dispatch, queryFulfilled }) {
+        // 🆕 создаём временный id
+        const tempId = `temp-${Date.now()}`
+
+        // 🧠 создаём временный todolist
+        const newTodolist: DomainTodolist = {
+          id: tempId,
+          title,
+          addedDate: new Date().toISOString(),
+          order: 0,
+          filter: "all",
+          entityStatus: "loading", // можно показать spinner
+        }
+
+        // 🛠 добавляем в кэш
+        const patchResult = dispatch(
+            todolistsApi.util.updateQueryData("getTodolists", undefined, (state) => {
+              state.unshift(newTodolist)
+            }),
+        )
+
+        try {
+          const { data } = await queryFulfilled
+
+          const real = data.data.item
+
+          // 🔁 заменяем temp на реальный
+          dispatch(
+              todolistsApi.util.updateQueryData("getTodolists", undefined, (state) => {
+                const index = state.findIndex((t) => t.id === tempId)
+                if (index !== -1) {
+                  state[index] = {
+                    ...real,
+                    filter: "all",
+                    entityStatus: "idle",
+                  }
+                }
+              }),
+          )
+        } catch {
+          // ❌ откат
+          patchResult.undo()
+        }
+      },
+
+      // invalidatesTags: ["Todolist"],
     }),
     removeTodolist: build.mutation<BaseResponse, string>({
       query: (id) => ({
