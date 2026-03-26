@@ -15,11 +15,16 @@ const RESPONSE_HEADERS_TO_SKIP = new Set([
   "transfer-encoding",
 ])
 
-function buildTargetUrl(pathSegments, query) {
-  const pathname = Array.isArray(pathSegments)
-    ? pathSegments.join("/")
-    : pathSegments ?? ""
+function normalizePath(pathValue) {
+  if (Array.isArray(pathValue)) {
+    return pathValue.join("/")
+  }
 
+  return pathValue ?? ""
+}
+
+function buildTargetUrl(pathValue, query) {
+  const pathname = normalizePath(pathValue)
   const url = new URL(`${TARGET_ORIGIN}/${pathname}`)
 
   for (const [key, value] of Object.entries(query)) {

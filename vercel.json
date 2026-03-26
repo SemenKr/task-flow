@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/samurai-api/:path*",
-      "destination": "/api/samurai/:path*"
+      "destination": "/api/samurai?path=:path*"
     },
     {
       "source": "/:path((?!api/|samurai-api/).*)",
@@ -22,7 +22,7 @@
     }
   ],
   "functions": {
-    "api/samurai/[...path].js": {
+    "api/samurai.js": {
       "maxDuration": 10
     }
   }
