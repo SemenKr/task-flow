@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/samurai-api/(.*)",
-      "destination": "https://social-network.samuraijs.com/api/1.1/$1"
+      "destination": "/api/samurai/$1"
     },
     {
       "source": "/(.*)",
