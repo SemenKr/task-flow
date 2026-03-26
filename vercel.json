@@ -3,10 +3,10 @@
   "rewrites": [
     {
       "source": "/samurai-api/:path*",
-      "destination": "https://social-network.samuraijs.com/api/1.1/:path*"
+      "destination": "/api/samurai/:path*"
     },
     {
-      "source": "/:path((?!samurai-api/).*)",
+      "source": "/:path((?!api/|samurai-api/).*)",
       "destination": "/index.html"
     }
   ],
@@ -20,5 +20,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/samurai/[...path].js": {
+      "maxDuration": 10
+    }
+  }
 }
