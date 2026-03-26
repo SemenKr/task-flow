@@ -95,13 +95,50 @@ export const todolistsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Todolist"],
     }),
-    reorderTodolist: build.mutation<BaseResponse, { todolistId: string; putAfterItemId: string | null }>({
+    reorderTodolist: build.mutation<
+        BaseResponse,
+        { todolistId: string; putAfterItemId: string | null }
+    >({
       query: ({ todolistId, putAfterItemId }) => ({
         url: `todo-lists/${todolistId}/reorder`,
         method: "PUT",
         body: { putAfterItemId },
       }),
-      invalidatesTags: ["Todolist"],
+
+      async onQueryStarted(
+          { todolistId, putAfterItemId },
+          { dispatch, queryFulfilled }
+      ) {
+        const patchResult = dispatch(
+            todolistsApi.util.updateQueryData("getTodolists", undefined, (state) => {
+              const sourceIndex = state.findIndex((todolist) => todolist.id === todolistId)
+              if (sourceIndex === -1) return
+
+              const [movedTodolist] = state.splice(sourceIndex, 1)
+              if (!movedTodolist) return
+
+              if (putAfterItemId === null) {
+                state.unshift(movedTodolist)
+                return
+              }
+
+              const targetIndex = state.findIndex((todolist) => todolist.id === putAfterItemId)
+
+              if (targetIndex === -1) {
+                state.splice(sourceIndex, 0, movedTodolist)
+                return
+              }
+
+              state.splice(targetIndex + 1, 0, movedTodolist)
+            })
+        )
+
+        try {
+          await queryFulfilled
+        } catch {
+          patchResult.undo()
+        }
+      },
     }),
   }),
 })
