@@ -1,4 +1,4 @@
-# Taskfolio
+# Taskflow
 
 Taskfolio is a portfolio-ready task management app built on top of the SamuraiJS API. The project focuses on product thinking, production-minded frontend architecture, and a polished user experience instead of a basic CRUD todo demo.
 
