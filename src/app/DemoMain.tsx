@@ -1141,6 +1141,7 @@ export const DemoMain = () => {
     const [selectedListId, setSelectedListId] = useState<string | null>(null)
     const [searchValue, setSearchValue] = useState('')
     const [sortValue, setSortValue] = useState<ListSortValue>('custom')
+    const [pendingFocusListId, setPendingFocusListId] = useState<string | null>(null)
     const [draggedListId, setDraggedListId] = useState<string | null>(null)
     const [dragOverListId, setDragOverListId] = useState<string | null>(null)
     const [orderedListIds, setOrderedListIds] = useState<string[] | null>(null)
@@ -1197,17 +1198,50 @@ export const DemoMain = () => {
         localStorage.setItem(DEMO_WORKSPACE_STORAGE_KEY, JSON.stringify(workspace))
     }, [workspace])
 
+    useEffect(() => {
+        if (!pendingFocusListId) {
+            return
+        }
+
+        if (!displayTodolists.some((list) => list.id === pendingFocusListId)) {
+            return
+        }
+
+        const nextListId = pendingFocusListId
+        setSelectedListId(nextListId)
+
+        const frameId = window.requestAnimationFrame(() => {
+            document.getElementById(`demo-list-card-${nextListId}`)?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            })
+        })
+
+        setPendingFocusListId(null)
+
+        return () => window.cancelAnimationFrame(frameId)
+    }, [displayTodolists, pendingFocusListId])
+
+    const resetDemoViewState = useCallback((nextListId: string | null) => {
+        setSearchValue('')
+        setSortValue('custom')
+        setSearchParams(createGlobalTaskSearchParams(searchParams, DEFAULT_GLOBAL_TASK_FILTERS), {replace: true})
+        setPendingFocusListId(nextListId)
+    }, [searchParams, setSearchParams])
+
     const restoreWorkspace = useCallback(() => {
-        setWorkspace(createInitialWorkspace())
+        const nextWorkspace = createInitialWorkspace()
+        setWorkspace(nextWorkspace)
+        resetDemoViewState(nextWorkspace.lists[0]?.id ?? null)
         toast.success('Demo workspace restored')
-    }, [])
+    }, [resetDemoViewState])
 
     const createDemoWorkspace = useCallback(() => {
         const nextWorkspace = createSeedWorkspace()
         setWorkspace(nextWorkspace)
-        setSelectedListId(nextWorkspace.lists[0]?.id ?? null)
+        resetDemoViewState(nextWorkspace.lists[0]?.id ?? null)
         toast.success('Demo workspace is ready')
-    }, [])
+    }, [resetDemoViewState])
 
     const addList = useCallback((title: string) => {
         const trimmedTitle = title.trim()
@@ -1218,11 +1252,11 @@ export const DemoMain = () => {
             lists: [nextList, ...prev.lists].map((list, index) => ({...list, order: index})),
             tasksByListId: {...prev.tasksByListId, [nextList.id]: []},
         }))
-        setSelectedListId(nextList.id)
+        resetDemoViewState(nextList.id)
         toast.success('List created')
 
         return nextList
-    }, [workspace.lists.length])
+    }, [resetDemoViewState, workspace.lists.length])
 
     const updateGlobalTaskFilters = useCallback((nextFilters: Partial<GlobalTaskFilters>) => {
         setSearchParams(createGlobalTaskSearchParams(searchParams, nextFilters), {replace: true})
