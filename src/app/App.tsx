@@ -1,28 +1,26 @@
 import './App.css'
-import {setIsAuthInitializedAC, setIsLoggedInAC} from '@/app/appSlice';
+import {setIsAuthInitializedAC, setIsDemoModeAC, setIsLoggedInAC} from '@/app/appSlice';
 import {Header} from '@/common/components/layout/Header.tsx';
 import {ResultCode} from '@/common/enums';
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
 import {Routing} from '@/common/routing';
-import {getStoredAuthToken} from '@/common/utils/authStorage';
+import {getDemoModeEnabled} from '@/common/utils/demoMode';
 import {ThemeProvider} from '@/components/theme-provider.tsx';
 import {useMeQuery} from '@/feature/auth/api/authApi';
-import {useEffect, useMemo} from 'react';
+import {useEffect} from 'react';
 import {Toaster} from 'sonner';
 
 export const App = () => {
-    const hasStoredToken = useMemo(
-        () => Boolean(getStoredAuthToken()),
-        [],
-    )
+    const isDemoModeEnabled = getDemoModeEnabled()
     const { data, isLoading } = useMeQuery(undefined, {
-        skip: !hasStoredToken,
+        skip: isDemoModeEnabled,
     })
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        if (!hasStoredToken) {
-            dispatch(setIsLoggedInAC({ isLoggedIn: false }))
+        if (isDemoModeEnabled) {
+            dispatch(setIsDemoModeAC({ isDemoMode: true }))
+            dispatch(setIsLoggedInAC({ isLoggedIn: true }))
             dispatch(setIsAuthInitializedAC({ isAuthInitialized: true }))
             return
         }
@@ -31,9 +29,10 @@ export const App = () => {
             return
         }
 
+        dispatch(setIsDemoModeAC({ isDemoMode: false }))
         dispatch(setIsLoggedInAC({ isLoggedIn: data?.resultCode === ResultCode.Success }))
         dispatch(setIsAuthInitializedAC({ isAuthInitialized: true }))
-    }, [data?.resultCode, dispatch, hasStoredToken, isLoading])
+    }, [data?.resultCode, dispatch, isDemoModeEnabled, isLoading])
 
     return (
         <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">

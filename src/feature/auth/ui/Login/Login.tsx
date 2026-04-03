@@ -1,4 +1,4 @@
-import {setIsLoggedInAC} from '@/app/appSlice';
+import {setIsAuthInitializedAC, setIsDemoModeAC, setIsLoggedInAC} from '@/app/appSlice';
 import {Alert, AlertDescription} from '@/common/components/ui/alert';
 import {Badge} from '@/common/components/ui/badge';
 import {Button} from '@/common/components/ui/button';
@@ -9,16 +9,18 @@ import {Label} from '@/common/components/ui/label';
 import {Skeleton} from '@/common/components/ui/skeleton';
 import {ResultCode} from '@/common/enums'
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
-import {setStoredAuthToken} from '@/common/utils/authStorage';
+import {clearDemoModeEnabled, setDemoModeEnabled} from '@/common/utils/demoMode';
 import {useLazyGetCaptchaUrlQuery, useLoginMutation} from '@/feature/auth/api/authApi';
 import {type LoginInputs, loginSchema} from '@/feature/auth/lib/schemas';
 import {zodResolver} from '@hookform/resolvers/zod'
 import {ArrowUpRight, Eye, EyeOff, ListChecks, ShieldCheck, Sparkles, Workflow} from 'lucide-react';
 import {useState} from 'react'
 import {Controller, type SubmitHandler, useForm} from 'react-hook-form'
+import {useNavigate} from 'react-router';
 
 export const Login = () => {
     const dispatch = useAppDispatch()
+    const navigate = useNavigate()
 
     const [login, {isLoading: isLoggingIn}] = useLoginMutation()
     const [getCaptchaUrl, {isFetching: isCaptchaLoading}] = useLazyGetCaptchaUrlQuery()
@@ -43,8 +45,9 @@ export const Login = () => {
         const res = await login(data)
 
         if ('data' in res && res.data?.resultCode === ResultCode.Success) {
+            clearDemoModeEnabled()
+            dispatch(setIsDemoModeAC({isDemoMode: false}))
             dispatch(setIsLoggedInAC({isLoggedIn: true}))
-            setStoredAuthToken(res.data.data.token, Boolean(data.rememberMe))
             setCaptchaUrl(null)
             reset()
         }
@@ -70,6 +73,14 @@ export const Login = () => {
                 setCaptchaUrl(captchaRes.data?.url ?? null)
             }
         }
+    }
+
+    const enterDemoMode = () => {
+        setDemoModeEnabled()
+        dispatch(setIsDemoModeAC({isDemoMode: true}))
+        dispatch(setIsLoggedInAC({isLoggedIn: true}))
+        dispatch(setIsAuthInitializedAC({isAuthInitialized: true}))
+        navigate('/')
     }
 
     const productHighlights = [
@@ -257,6 +268,15 @@ export const Login = () => {
 
                             <Button type="submit" className="h-11 w-full rounded-2xl" disabled={isAuthBusy}>
                                 {isLoggingIn ? 'Signing in...' : 'Enter dashboard'}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-11 w-full rounded-2xl"
+                                onClick={enterDemoMode}
+                                disabled={isAuthBusy}
+                            >
+                                Enter demo mode
                             </Button>
                         </form>
 
