@@ -3,7 +3,7 @@ import { clearStoredAuthToken } from "@/common/utils/authStorage"
 import { handleError } from "@/common/utils/handleError"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
-const baseUrl = "/samurai-api"
+const baseUrl = import.meta.env.VITE_BASE_URL || "/samurai-api"
 
 export const baseApi = createApi({
     reducerPath: "todolistsApi",

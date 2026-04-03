@@ -81,7 +81,7 @@ pnpm exec playwright test docs/capture-readme-assets.spec.ts --reporter=line
 
 ### 1. Split API access by environment
 
-Both local development and production use the same `/samurai-api` entrypoint. Vite handles it with a dev proxy locally, and Vercel rewrites it to the serverless Samurai proxy in production so browser CORS does not block auth.
+Local development uses the Vite proxy at `/samurai-api`, while production builds talk directly to `https://social-network.samuraijs.com/api/1.1`. This keeps localhost free from CORS issues and allows the deployed app to run without a custom serverless proxy.
 
 ### 2. Built-in demo mode for evaluators
 
@@ -151,7 +151,7 @@ For local development, also create `.env.development` from `.env.development.exa
 VITE_BASE_URL=/samurai-api
 ```
 
-Client requests always go through `/samurai-api`. In local development Vite proxies that path, and on Vercel the rewrite points it to the serverless Samurai proxy.
+Production builds use the direct SamuraiJS API URL by default. You can still override `VITE_BASE_URL` if needed.
 
 ## Testing
 
