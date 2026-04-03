@@ -1,4 +1,4 @@
-import {selectIsAuthInitialized, selectIsDemoMode, selectIsLoggedIn} from '@/app/appSlice';
+import {selectIsAuthInitialized, selectIsLoggedIn} from '@/app/appSlice';
 import {ProtectedRoute} from '@/common/components/ProtectedRoute/ProtectedRoute';
 import {Skeleton} from '@/common/components/ui/skeleton';
 import {useAppSelector} from '@/common/hooks/useAppSelector';
@@ -10,12 +10,6 @@ const Main = lazy(async () => {
     const module = await import('@/app/Main')
 
     return {default: module.Main}
-})
-
-const DemoMain = lazy(async () => {
-    const module = await import('@/app/DemoMain')
-
-    return {default: module.DemoMain}
 })
 
 const Login = lazy(async () => {
@@ -57,7 +51,6 @@ export const Path = {
 export const Routing = () => {
     const isLoggedIn = useAppSelector(selectIsLoggedIn)
     const isAuthInitialized = useAppSelector(selectIsAuthInitialized)
-    const isDemoMode = useAppSelector(selectIsDemoMode)
 
     return (
         <Suspense fallback={<RouteSkeleton />}>
@@ -72,7 +65,7 @@ export const Routing = () => {
                         />
                     )}
                 >
-                    <Route path={Path.Main} element={isDemoMode ? <DemoMain/> : <Main/>}/>
+                    <Route path={Path.Main} element={<Main/>}/>
                 </Route>
                 <Route
                     element={(

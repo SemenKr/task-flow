@@ -22,13 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Local env overrides
-.env.development
-.env.local
-
-# Generated demo/GIF artifacts
-docs/screenshots/_debug-*
-docs/screenshots/_videos/
-docs/screenshots/demo.gif
-docs/screenshots/demo.webm

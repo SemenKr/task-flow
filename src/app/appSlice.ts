@@ -9,7 +9,6 @@ export const appSlice = createSlice({
         error: null as string | null,
         isLoggedIn: false,
         isAuthInitialized: false,
-        isDemoMode: false,
     },
     selectors: {
         selectThemeMode: (state) => state.themeMode,
@@ -17,7 +16,6 @@ export const appSlice = createSlice({
         selectAppError: (state) => state.error,
         selectIsLoggedIn: (state) => state.isLoggedIn,
         selectIsAuthInitialized: (state) => state.isAuthInitialized,
-        selectIsDemoMode: (state) => state.isDemoMode,
     },
     extraReducers: (builder) => {
         builder
@@ -51,9 +49,6 @@ export const appSlice = createSlice({
         setIsAuthInitializedAC: create.reducer<{ isAuthInitialized: boolean }>((state, action) => {
             state.isAuthInitialized = action.payload.isAuthInitialized
         }),
-        setIsDemoModeAC: create.reducer<{ isDemoMode: boolean }>((state, action) => {
-            state.isDemoMode = action.payload.isDemoMode
-        }),
     }),
 })
 
@@ -63,7 +58,6 @@ export const {
     selectAppError,
     selectIsLoggedIn,
     selectIsAuthInitialized,
-    selectIsDemoMode,
 } = appSlice.selectors
 export const {
     changeThemeModeAC,
@@ -71,7 +65,6 @@ export const {
     setAppErrorAC,
     setIsLoggedInAC,
     setIsAuthInitializedAC,
-    setIsDemoModeAC,
 } = appSlice.actions
 export const appReducer = appSlice.reducer
 
