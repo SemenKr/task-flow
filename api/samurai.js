@@ -2,7 +2,6 @@ const TARGET_ORIGIN = "https://social-network.samuraijs.com/api/1.1"
 
 const REQUEST_HEADERS_TO_FORWARD = new Set([
   "accept",
-  "accept-language",
   "api-key",
   "authorization",
   "content-type",
@@ -13,19 +12,6 @@ const REQUEST_HEADERS_TO_FORWARD = new Set([
 ])
 
 const RESPONSE_HEADERS_TO_SKIP = new Set(["content-length", "transfer-encoding"])
-
-function getPublicOrigin(req) {
-  const protocolHeader = req.headers["x-forwarded-proto"]
-  const hostHeader = req.headers["x-forwarded-host"] || req.headers.host
-  const protocol = Array.isArray(protocolHeader) ? protocolHeader[0] : protocolHeader || "https"
-  const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader
-
-  if (!host) {
-    return null
-  }
-
-  return `${protocol}://${host}`
-}
 
 function buildUpstreamUrl(req) {
   const basePath = Array.isArray(req.query.path) ? req.query.path.join("/") : req.query.path || ""
@@ -49,7 +35,6 @@ function buildUpstreamUrl(req) {
 
 function buildRequestHeaders(req) {
   const headers = new Headers()
-  const publicOrigin = getPublicOrigin(req)
 
   for (const [key, value] of Object.entries(req.headers)) {
     if (!REQUEST_HEADERS_TO_FORWARD.has(key.toLowerCase())) continue
@@ -61,12 +46,6 @@ function buildRequestHeaders(req) {
     }
 
     headers.set(key, value)
-  }
-
-  if (publicOrigin) {
-    // Mutating Samurai requests are domain-sensitive. Set explicit public origin/referer.
-    headers.set("origin", publicOrigin)
-    headers.set("referer", `${publicOrigin}/`)
   }
 
   return headers
