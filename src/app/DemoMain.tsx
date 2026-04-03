@@ -14,6 +14,7 @@ import {
 } from '@/app/main/lib/todolists'
 import {useSyncedSelectedList} from '@/app/main/lib/useSyncedSelectedList'
 import {DEFAULT_GLOBAL_TASK_FILTERS} from '@/app/main/model/constants'
+import {DEMO_WORKSPACE} from '@/app/main/model/demo'
 import type {
     ListSortValue,
     SidebarFiltersModel,
@@ -120,6 +121,7 @@ type DemoTodolistItemProps = {
 }
 
 const pageSizeOptions = [4, 6, 8, 12]
+const DEMO_WORKSPACE_STORAGE_KEY = 'demo-workspace'
 
 const createId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`
 
@@ -213,6 +215,36 @@ const createInitialWorkspace = (): DemoWorkspace => {
                 }),
             ],
         },
+    }
+}
+
+const createSeedWorkspace = (): DemoWorkspace => {
+    const list = createDemoList(DEMO_WORKSPACE.title, 0)
+
+    return {
+        lists: [list],
+        tasksByListId: {
+            [list.id]: DEMO_WORKSPACE.tasks.map((title, index) => createDemoTask(list.id, title, {
+                status: index === 0 ? TaskStatus.InProgress : index === DEMO_WORKSPACE.tasks.length - 1 ? TaskStatus.Completed : TaskStatus.New,
+                priority: index === 0 ? TaskPriority.Hi : index === 2 ? TaskPriority.Middle : TaskPriority.Low,
+                deadline: index < 2 ? createLocalDate(index + 1, 16) : null,
+                order: index,
+            })),
+        },
+    }
+}
+
+const getStoredDemoWorkspace = (): DemoWorkspace | null => {
+    try {
+        const rawWorkspace = localStorage.getItem(DEMO_WORKSPACE_STORAGE_KEY)
+
+        if (!rawWorkspace) {
+            return null
+        }
+
+        return JSON.parse(rawWorkspace) as DemoWorkspace
+    } catch {
+        return null
     }
 }
 
@@ -1105,7 +1137,7 @@ const DemoTodolistItem = ({
 
 export const DemoMain = () => {
     const [searchParams, setSearchParams] = useSearchParams()
-    const [workspace, setWorkspace] = useState<DemoWorkspace>(() => createInitialWorkspace())
+    const [workspace, setWorkspace] = useState<DemoWorkspace>(() => getStoredDemoWorkspace() ?? createInitialWorkspace())
     const [selectedListId, setSelectedListId] = useState<string | null>(null)
     const [searchValue, setSearchValue] = useState('')
     const [sortValue, setSortValue] = useState<ListSortValue>('custom')
@@ -1161,9 +1193,20 @@ export const DemoMain = () => {
         setDragOverListId(null)
     }, [workspace.lists, sortValue, normalizedSearchValue])
 
+    useEffect(() => {
+        localStorage.setItem(DEMO_WORKSPACE_STORAGE_KEY, JSON.stringify(workspace))
+    }, [workspace])
+
     const restoreWorkspace = useCallback(() => {
         setWorkspace(createInitialWorkspace())
         toast.success('Demo workspace restored')
+    }, [])
+
+    const createDemoWorkspace = useCallback(() => {
+        const nextWorkspace = createSeedWorkspace()
+        setWorkspace(nextWorkspace)
+        setSelectedListId(nextWorkspace.lists[0]?.id ?? null)
+        toast.success('Demo workspace is ready')
     }, [])
 
     const addList = useCallback((title: string) => {
@@ -1467,7 +1510,7 @@ export const DemoMain = () => {
                     ) : (
                         <EmptyTodolistsState
                             onAddTodolist={addList}
-                            onCreateDemoWorkspace={restoreWorkspace}
+                            onCreateDemoWorkspace={createDemoWorkspace}
                             showOnboarding
                         />
                     )}
