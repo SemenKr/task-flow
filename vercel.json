@@ -2,10 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/samurai-api/:path*",
-      "destination": "/api/samurai?path=:path*"
-    },
-    {
       "source": "/((?!.*\\.).*)",
       "destination": "/index.html"
     }
