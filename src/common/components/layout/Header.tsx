@@ -1,4 +1,4 @@
-import {selectAppStatus, selectIsLoggedIn, setIsLoggedInAC} from '@/app/appSlice';
+import {selectAppStatus, selectIsDemoMode, selectIsLoggedIn, setIsDemoModeAC, setIsLoggedInAC} from '@/app/appSlice';
 import {baseApi} from '@/app/baseApi';
 import {ResultCode} from '@/common/enums';
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
@@ -8,6 +8,7 @@ import {Button} from '@/common/components/ui/button.tsx';
 import {LinearProgress} from '@/common/components/ui'
 import {cn} from '@/common/lib/utils.ts'
 import {clearStoredAuthToken} from '@/common/utils/authStorage';
+import {clearDemoModeEnabled} from '@/common/utils/demoMode';
 import {ModeToggle} from '@/components/mode-toggle.tsx'
 import {useLogoutMutation} from '@/feature/auth/api/authApi';
 import {ListTodo} from 'lucide-react';
@@ -15,12 +16,22 @@ import {Link} from 'react-router';
 
 export const Header = () => {
     const isLoggedIn = useAppSelector(selectIsLoggedIn)
+    const isDemoMode = useAppSelector(selectIsDemoMode)
     const status = useAppSelector(selectAppStatus)
 
     const [logout] = useLogoutMutation()
 
     const dispatch = useAppDispatch()
     const logoutHandler = () => {
+        if (isDemoMode) {
+            clearDemoModeEnabled()
+            clearStoredAuthToken()
+            dispatch(setIsDemoModeAC({ isDemoMode: false }))
+            dispatch(setIsLoggedInAC({ isLoggedIn: false }))
+            dispatch(baseApi.util.resetApiState())
+            return
+        }
+
         logout()
             .then((res) => {
                 if (res.data?.resultCode === ResultCode.Success) {
@@ -52,7 +63,7 @@ export const Header = () => {
                 <nav className="flex items-center gap-2" aria-label="Primary">
                     {isLoggedIn && (
                         <Badge variant="outline" className="hidden rounded-full px-3 py-1 text-xs text-muted-foreground md:inline-flex">
-                            API synced
+                            {isDemoMode ? 'Demo mode' : 'API synced'}
                         </Badge>
                     )}
                     {isLoggedIn && (

@@ -1,13 +1,12 @@
 # Taskflow
 
-Taskfolio is a portfolio-ready task management app built on top of the SamuraiJS API. The project focuses on product thinking, production-minded frontend architecture, and a polished user experience instead of a basic CRUD todo demo.
+Taskfolio is a portfolio-ready task management app built on top of the SamuraiJS API. The project focuses on product thinking, production-minded frontend architecture, and a polished user experience instead of a basic CRUD todo demo. For reliable review, it also includes a local `Demo mode` that does not depend on external credentials.
 
 ## Demo
 
 - Live demo: https://task-flow-samkr.vercel.app/
-- Demo credentials:
-  - Email: `free@samuraijs.com`
-  - Password: `free`
+- Recommended review flow: use `Enter demo mode` on the login screen
+- Optional live API flow: sign in with your own SamuraiJS account
 
 ## Stack
 
