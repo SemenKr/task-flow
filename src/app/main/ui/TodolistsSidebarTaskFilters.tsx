@@ -6,7 +6,7 @@ import type {GlobalTaskDueFilter, GlobalTaskPriorityFilter, GlobalTaskStatusFilt
 import {Badge} from '@/common/components/ui/badge';
 import {cn} from '@/common/lib/utils';
 import {SlidersHorizontal, X} from 'lucide-react';
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useId, useMemo, useState} from 'react';
 import {useDebouncedValue} from '../lib/useDebouncedValue';
 import {
     DEFAULT_GLOBAL_TASK_FILTERS,
@@ -228,6 +228,7 @@ export const DesktopTodolistsSidebarTaskFilters = ({
     filters,
 }: DesktopTodolistsSidebarTaskFiltersProps) => {
     const [isOpen, setIsOpen] = useState(false)
+    const filtersPanelId = useId()
 
     return (
         <section className="space-y-3 rounded-3xl border border-border/50 bg-card/80 p-4">
@@ -246,7 +247,14 @@ export const DesktopTodolistsSidebarTaskFilters = ({
                             Reset
                         </Button>
                     ) : null}
-                    <Button variant="outline" size="sm" className="h-8 rounded-full px-3 text-xs" onClick={() => setIsOpen((prev) => !prev)}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-full px-3 text-xs"
+                        onClick={() => setIsOpen((prev) => !prev)}
+                        aria-expanded={isOpen}
+                        aria-controls={filtersPanelId}
+                    >
                         {isOpen ? 'Hide' : 'Show'}
                     </Button>
                 </div>
@@ -254,7 +262,9 @@ export const DesktopTodolistsSidebarTaskFilters = ({
 
             <TaskFilterChips filters={filters} />
 
-            {isOpen ? <TaskFiltersContent filters={filters} /> : null}
+            <div id={filtersPanelId} hidden={!isOpen}>
+                {isOpen ? <TaskFiltersContent filters={filters} /> : null}
+            </div>
         </section>
     )
 }

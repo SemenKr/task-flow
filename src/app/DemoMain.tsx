@@ -98,6 +98,7 @@ type DemoTasksProps = {
     todolist: DomainTodolist
     tasks: DomainTask[]
     globalTaskFilters: GlobalTaskFilters
+    allowTaskReorder: boolean
     onUpdateTask: (taskId: string, changes: Partial<DomainTask>) => void
     onDeleteTask: (taskId: string) => void
     onReorderTasks: (taskIds: string[]) => void
@@ -114,6 +115,7 @@ type DemoTodolistItemProps = {
     onUpdateTitle: (title: string) => void
     onDelete: () => void
     onSetFilter: (filter: FilterValues) => void
+    allowTaskReorder: boolean
     onAddTask: (title: string) => void
     onUpdateTask: (taskId: string, changes: Partial<DomainTask>) => void
     onDeleteTask: (taskId: string) => void
@@ -519,7 +521,7 @@ const DemoTaskItem = ({
                                     event.stopPropagation()
                                     setIsDialogOpen(true)
                                 }}
-                                className="h-8 w-8 shrink-0 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                                className="h-9 w-9 shrink-0 hover:bg-blue-50 hover:text-blue-600 sm:h-8 sm:w-8 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                                 aria-label="Edit task"
                             >
                                 <Edit2 className="h-4 w-4" />
@@ -532,7 +534,7 @@ const DemoTaskItem = ({
                                     onDeleteTask(task.id)
                                     toast.success('Task deleted')
                                 }}
-                                className="h-8 w-8 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                                className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 sm:h-8 sm:w-8 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                                 aria-label="Delete task"
                             >
                                 <Trash2 className="h-4 w-4" />
@@ -540,7 +542,7 @@ const DemoTaskItem = ({
                         </div>
                     </div>
 
-                    <div className="mt-1.5 flex items-center gap-1.5 overflow-hidden whitespace-nowrap [mask-image:linear-gradient(to_right,black_0%,black_84%,transparent_100%)]">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:flex-nowrap sm:overflow-hidden sm:whitespace-nowrap sm:[mask-image:linear-gradient(to_right,black_0%,black_84%,transparent_100%)]">
                         <Badge variant="outline" className="shrink-0 rounded-full px-2 py-0.5 text-[11px]">
                             {statusLabel}
                         </Badge>
@@ -709,6 +711,7 @@ const DemoTasks = ({
     todolist,
     tasks,
     globalTaskFilters,
+    allowTaskReorder,
     onUpdateTask,
     onDeleteTask,
     onReorderTasks,
@@ -735,7 +738,7 @@ const DemoTasks = ({
         [globalTaskFilters, tasks, todolist.filter],
     )
 
-    const reorderEnabled = todolist.filter === 'all' && !hasActiveGlobalFilters
+    const reorderEnabled = allowTaskReorder && todolist.filter === 'all' && !hasActiveGlobalFilters
     const orderedTasks = orderedTaskIds
         ? [...filteredTasks].sort(
             (firstTask, secondTask) => orderedTaskIds.indexOf(firstTask.id) - orderedTaskIds.indexOf(secondTask.id),
@@ -924,6 +927,7 @@ const DemoTodolistItem = ({
     onUpdateTitle,
     onDelete,
     onSetFilter,
+    allowTaskReorder,
     onAddTask,
     onUpdateTask,
     onDeleteTask,
@@ -1125,6 +1129,7 @@ const DemoTodolistItem = ({
                         todolist={todolist}
                         tasks={tasks}
                         globalTaskFilters={globalTaskFilters}
+                        allowTaskReorder={allowTaskReorder}
                         onUpdateTask={onUpdateTask}
                         onDeleteTask={onDeleteTask}
                         onReorderTasks={onReorderTasks}
@@ -1145,6 +1150,13 @@ export const DemoMain = () => {
     const [draggedListId, setDraggedListId] = useState<string | null>(null)
     const [dragOverListId, setDragOverListId] = useState<string | null>(null)
     const [orderedListIds, setOrderedListIds] = useState<string[] | null>(null)
+    const [isTouchDevice, setIsTouchDevice] = useState(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+            return false
+        }
+
+        return window.matchMedia('(pointer: coarse)').matches
+    })
 
     const hasTodolists = workspace.lists.length > 0
     const globalTaskFilters = useMemo(
@@ -1164,8 +1176,8 @@ export const DemoMain = () => {
         [normalizedSearchValue, sortValue, workspace.lists],
     )
     const dragListsEnabled = useMemo(
-        () => canReorderTodolists(sortValue, normalizedSearchValue, false, false),
-        [normalizedSearchValue, sortValue],
+        () => !isTouchDevice && canReorderTodolists(sortValue, normalizedSearchValue, false, false),
+        [isTouchDevice, normalizedSearchValue, sortValue],
     )
     const displayTodolists = useMemo(
         () => applyPreviewOrder(visibleTodolists, orderedListIds),
@@ -1193,6 +1205,29 @@ export const DemoMain = () => {
         setDraggedListId(null)
         setDragOverListId(null)
     }, [workspace.lists, sortValue, normalizedSearchValue])
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+            return
+        }
+
+        const mediaQuery = window.matchMedia('(pointer: coarse)')
+        const handleChange = () => {
+            setIsTouchDevice(mediaQuery.matches)
+        }
+
+        handleChange()
+
+        if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', handleChange)
+
+            return () => mediaQuery.removeEventListener('change', handleChange)
+        }
+
+        mediaQuery.addListener(handleChange)
+
+        return () => mediaQuery.removeListener(handleChange)
+    }, [])
 
     useEffect(() => {
         localStorage.setItem(DEMO_WORKSPACE_STORAGE_KEY, JSON.stringify(workspace))
@@ -1488,7 +1523,7 @@ export const DemoMain = () => {
     return (
         <main className="relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 -z-10 h-48 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_46%),radial-gradient(circle_at_top_right,rgba(251,191,36,0.08),transparent_30%)]" />
-            <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[288px_minmax(0,1fr)] lg:px-8 lg:py-6">
+            <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 [&>*]:min-w-0 sm:px-6 lg:grid-cols-[288px_minmax(0,1fr)] lg:px-8 lg:py-6">
                 <TodolistsSidebar
                     onAddTodolist={addList}
                     filters={sidebarFilters}
@@ -1510,7 +1545,7 @@ export const DemoMain = () => {
                                     </div>
                                 </div>
                             </div>
-                            <Button variant="outline" onClick={restoreWorkspace} className="rounded-2xl">
+                            <Button variant="outline" onClick={restoreWorkspace} className="w-full rounded-2xl sm:w-auto">
                                 Restore workspace
                             </Button>
                         </div>
@@ -1521,7 +1556,7 @@ export const DemoMain = () => {
                     {hasTodolists ? (
                         <div className="dashboard-grid">
                             {displayTodolists.map((list) => (
-                                <div key={list.id} id={`demo-list-card-${list.id}`}>
+                                <div key={list.id} id={`demo-list-card-${list.id}`} className="min-w-0">
                                     <DemoTodolistItem
                                         todolist={list}
                                         tasks={workspace.tasksByListId[list.id] ?? []}
@@ -1533,6 +1568,7 @@ export const DemoMain = () => {
                                         onUpdateTitle={(title) => updateList(list.id, (currentList) => ({...currentList, title}))}
                                         onDelete={() => deleteList(list.id)}
                                         onSetFilter={(filter) => updateList(list.id, (currentList) => ({...currentList, filter}))}
+                                        allowTaskReorder={!isTouchDevice}
                                         onAddTask={(title) => addTask(list.id, title)}
                                         onUpdateTask={(taskId, changes) => updateTask(list.id, taskId, changes)}
                                         onDeleteTask={(taskId) => deleteTask(list.id, taskId)}
