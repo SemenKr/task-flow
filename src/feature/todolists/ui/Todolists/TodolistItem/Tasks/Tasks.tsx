@@ -59,6 +59,7 @@ const TasksSkeleton = () => {
 };
 
 const pageSizeOptions = [4, 6, 8, 12]
+const filteredTasksInitialPageSize = 100
 
 const TasksPagination = ({
     totalCount,
@@ -167,12 +168,13 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
 
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(6)
+    const [filteredRequestPageSize, setFilteredRequestPageSize] = useState(filteredTasksInitialPageSize)
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
     const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null)
     const [orderedTaskIds, setOrderedTaskIds] = useState<string[] | null>(null)
 
     const [reorderTask] = useReorderTaskMutation()
-    const requestPageSize = hasActiveGlobalFilters ? 100 : pageSize
+    const requestPageSize = hasActiveGlobalFilters ? filteredRequestPageSize : pageSize
     const { data, isLoading } = useGetTasksQuery({
         todolistId: id,
         params: { page: hasActiveGlobalFilters ? 1 : page, count: requestPageSize },
@@ -180,7 +182,18 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
 
     useEffect(() => {
         setPage(1)
+        setFilteredRequestPageSize(filteredTasksInitialPageSize)
     }, [filter, id, globalTaskFilters.query, globalTaskFilters.status, globalTaskFilters.priority, globalTaskFilters.due])
+
+    useEffect(() => {
+        if (!hasActiveGlobalFilters || !data) {
+            return
+        }
+
+        if (data.totalCount > filteredRequestPageSize) {
+            setFilteredRequestPageSize(data.totalCount)
+        }
+    }, [data, filteredRequestPageSize, hasActiveGlobalFilters])
 
     useEffect(() => {
         setOrderedTaskIds(null)
