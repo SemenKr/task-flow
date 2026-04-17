@@ -10,6 +10,7 @@ import {useRemoveTodolistMutation, useUpdateTodolistTitleMutation} from '@/featu
 import type {DomainTodolist, GlobalTaskFilters} from '@/feature/todolists/libs/types';
 import {FilterButtons} from '@/feature/todolists/ui/Todolists/Todolist/FilterButtons.tsx';
 import {Tasks} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/Tasks.tsx';
+import {getTaskActionErrorMessage} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/taskActionErrorMessage';
 import {Check, Edit2, FolderKanban, Trash2, X} from 'lucide-react';
 import {KeyboardEvent, useEffect, useState} from 'react';
 import {toast} from 'sonner';
@@ -59,7 +60,12 @@ export const TodolistItem = ({
 
     const createTask = (title: string) => {
         if (isAddingTask) return
-        addTask({ todolistId: todolist.id, title })
+        void addTask({ todolistId: todolist.id, title })
+            .unwrap()
+            .catch((error) => {
+                toast.error(getTaskActionErrorMessage('create', error))
+                console.error('Error creating task:', error)
+            })
     }
 
     const startEditingTitle = () => {

@@ -17,6 +17,7 @@ import {cn} from '@/common/lib/utils.ts';
 import {useRemoveTaskMutation, useUpdateTaskMutation} from '@/feature/todolists/api/tasksApi';
 import type {DomainTask} from '@/feature/todolists/api/tasksApi.types';
 import {createTaskModel} from '@/feature/todolists/libs/utils';
+import {getTaskActionErrorMessage} from '../taskActionErrorMessage';
 
 import {CalendarDays, ChevronDown, ChevronUp, Edit2, Flag, GripVertical, Timer, Trash2} from 'lucide-react';
 import {useEffect, useState} from 'react';
@@ -73,7 +74,12 @@ export const TaskItem = ({
     const changeTaskStatus = (checked: boolean) => {
         const status = checked ? TaskStatus.Completed : TaskStatus.New
         const model = createTaskModel(task, { status })
-        updateTask({ taskId: task.id, todolistId, model })
+        void updateTask({ taskId: task.id, todolistId, model })
+            .unwrap()
+            .catch((error) => {
+                toast.error(getTaskActionErrorMessage('update', error))
+                console.error('Error updating task status:', error)
+            })
     }
 
     const isTaskCompleted = task.status === TaskStatus.Completed
@@ -125,7 +131,7 @@ export const TaskItem = ({
             await removeTask({ taskId: task.id, todolistId }).unwrap()
             toast.success('Task deleted')
         } catch (error) {
-            toast.error('Failed to delete task')
+            toast.error(getTaskActionErrorMessage('delete', error))
             console.error('Error deleting task:', error)
         }
     }
@@ -160,7 +166,7 @@ export const TaskItem = ({
             toast.success('Task updated')
             setIsDialogOpen(false)
         } catch (error) {
-            toast.error('Failed to update task')
+            toast.error(getTaskActionErrorMessage('update', error))
             console.error('Error updating task:', error)
         }
     }

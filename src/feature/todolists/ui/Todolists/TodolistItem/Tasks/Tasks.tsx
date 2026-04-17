@@ -6,6 +6,7 @@ import {useGetTasksQuery, useReorderTaskMutation} from '@/feature/todolists/api/
 import type {DomainTodolist, GlobalTaskFilters} from '@/feature/todolists/libs/types';
 import {EmptyState} from '@/feature/todolists/ui/Todolists/Todolist/EmptyState.tsx';
 import {TaskItem} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/TaskItem\'/TaskItem.tsx';
+import {getTaskActionErrorMessage} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/taskActionErrorMessage';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {useEffect, useState} from 'react';
 import {toast} from 'sonner';
@@ -317,7 +318,7 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
         try {
             await reorderTask({ todolistId: id, taskId: draggedTaskId, putAfterItemId }).unwrap()
         } catch (error) {
-            toast.error('Failed to save task order')
+            toast.error(getTaskActionErrorMessage('reorder', error))
             console.error('Error reordering tasks:', error)
             setOrderedTaskIds(null)
         } finally {
