@@ -44,7 +44,7 @@ const TasksSkeleton = () => {
                         className="rounded-2xl border border-border/60 bg-background/70"
                     >
                         <div className="flex items-center gap-3 p-3">
-                            <Skeleton className="h-4 w-4 rounded-[4px]" />
+                            <Skeleton className="h-4 w-4 rounded-lg" />
                             <Skeleton className={`h-4 ${widthClass}`} />
                             <div className="ml-auto flex gap-1">
                                 <Skeleton className="h-8 w-8 rounded-md" />
@@ -186,7 +186,7 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
         setOrderedTaskIds(null)
         setDraggedTaskId(null)
         setDragOverTaskId(null)
-    }, [data, filter, page, id])
+    }, [data, filter, hasActiveGlobalFilters, page, id])
 
     useEffect(() => {
         if (!data) return
@@ -240,7 +240,7 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
         })
     }, [completedTasksCount, matchedTasksCount, onStatsChange, overdueTasksCount, todayTasksCount, totalTasksCount])
 
-    const reorderEnabled = filter === 'all'
+    const reorderEnabled = filter === 'all' && !hasActiveGlobalFilters
 
     const tasksToRender = orderedTaskIds
         ? [...(filteredTasks ?? [])].sort(
