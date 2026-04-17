@@ -189,6 +189,7 @@ export const TaskItem = ({
                     checked={isTaskCompleted}
                     onCheckedChange={(checked) => changeTaskStatus(checked === true)}
                     id={task.id}
+                    aria-label={`Toggle completion for task ${task.title}`}
                     className="mt-1 shrink-0"
                 />
 

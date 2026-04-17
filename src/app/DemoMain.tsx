@@ -472,6 +472,7 @@ const DemoTaskItem = ({
                         status: checked === true ? TaskStatus.Completed : TaskStatus.New,
                     })}
                     id={`${todolistId}-${task.id}`}
+                    aria-label={`Toggle completion for task ${task.title}`}
                     className="mt-1 shrink-0"
                 />
 
