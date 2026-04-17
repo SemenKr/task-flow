@@ -16,6 +16,13 @@ setupListeners(store.dispatch)
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
 
-// для возможности обращения к store в консоли браузера
-// @ts-ignore
-window.store = store
+declare global {
+    interface Window {
+        store?: typeof store
+    }
+}
+
+// доступ к store в консоли браузера только в dev-режиме
+if (import.meta.env.DEV) {
+    window.store = store
+}

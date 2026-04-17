@@ -1,6 +1,28 @@
 import type { RequestStatus } from "@/common/types"
 import { createSlice, isFulfilled, isPending, isRejected } from "@reduxjs/toolkit"
 
+type EndpointAwareAction = {
+    meta?: {
+        arg?: {
+            endpointName?: string
+        }
+    }
+    error?: {
+        message?: string
+    }
+}
+
+const ignoredLoadingEndpoints = new Set(["getTodolists", "getTasks"])
+
+const hasRtkQueryEndpointName = (action: unknown): action is EndpointAwareAction => {
+    if (!action || typeof action !== "object") {
+        return false
+    }
+
+    const endpointName = (action as EndpointAwareAction).meta?.arg?.endpointName
+    return typeof endpointName === "string"
+}
+
 export const appSlice = createSlice({
     name: "app",
     initialState: {
@@ -21,16 +43,21 @@ export const appSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addMatcher(isPending, (state, action) => {
-                const endpointName =
-                    (action as { meta?: { arg?: { endpointName?: string } } }).meta?.arg?.endpointName
-                if (endpointName === "getTodolists" || endpointName === "getTasks") return
+            .addMatcher((action): action is EndpointAwareAction => (
+                isPending(action) && hasRtkQueryEndpointName(action)
+            ), (state, action) => {
+                const endpointName = action.meta?.arg?.endpointName
+                if (endpointName && ignoredLoadingEndpoints.has(endpointName)) return
                 state.status = "loading"
             })
-            .addMatcher(isFulfilled, (state) => {
+            .addMatcher((action): action is EndpointAwareAction => (
+                isFulfilled(action) && hasRtkQueryEndpointName(action)
+            ), (state) => {
                 state.status = "succeeded"
             })
-            .addMatcher(isRejected, (state, action) => {
+            .addMatcher((action): action is EndpointAwareAction => (
+                isRejected(action) && hasRtkQueryEndpointName(action)
+            ), (state, action) => {
                 state.status = "failed"
                 state.error = action.error?.message ?? "Some error"
             })
