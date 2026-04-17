@@ -259,7 +259,7 @@ export const TaskItem = ({
                         </div>
                     </div>
 
-                    <div className="mt-1.5 flex items-center gap-1.5 overflow-hidden whitespace-nowrap [mask-image:linear-gradient(to_right,black_0%,black_84%,transparent_100%)]">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:flex-nowrap sm:overflow-hidden sm:whitespace-nowrap sm:[mask-image:linear-gradient(to_right,black_0%,black_84%,transparent_100%)]">
                         <Badge variant="outline" className="shrink-0 rounded-full px-2 py-0.5 text-[11px]">
                             {statusLabel}
                         </Badge>
