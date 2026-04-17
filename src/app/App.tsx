@@ -8,15 +8,15 @@ import {getDemoModeEnabled} from '@/common/utils/demoMode';
 import {getStoredAuthToken} from '@/common/utils/authStorage';
 import {ThemeProvider} from '@/components/theme-provider.tsx';
 import {useMeQuery} from '@/feature/auth/api/authApi';
-import {useEffect, useMemo} from 'react';
+import {useEffect, useState} from 'react';
 import {Toaster} from 'sonner';
 
 export const App = () => {
-    const isDemoModeEnabled = getDemoModeEnabled()
-    const hasStoredToken = useMemo(
-        () => Boolean(getStoredAuthToken()),
-        [],
-    )
+    const [storageBootstrap] = useState(() => ({
+        isDemoModeEnabled: getDemoModeEnabled(),
+        hasStoredToken: Boolean(getStoredAuthToken()),
+    }))
+    const {isDemoModeEnabled, hasStoredToken} = storageBootstrap
     const { data, isLoading } = useMeQuery(undefined, {
         skip: isDemoModeEnabled || !hasStoredToken,
     })
