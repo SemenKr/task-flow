@@ -120,9 +120,14 @@ export const TaskItem = ({
         setFormValues(createFormValues(task))
     }, [task])
 
-    const handleDelete = () => {
-        removeTask({ taskId: task.id, todolistId })
-        toast.success('Task deleted')
+    const handleDelete = async () => {
+        try {
+            await removeTask({ taskId: task.id, todolistId }).unwrap()
+            toast.success('Task deleted')
+        } catch (error) {
+            toast.error('Failed to delete task')
+            console.error('Error deleting task:', error)
+        }
     }
 
     const handleFieldChange = (field: keyof TaskFormValues, value: string) => {
@@ -244,7 +249,7 @@ export const TaskItem = ({
                                 variant="ghost"
                                 onClick={(event) => {
                                     event.stopPropagation()
-                                    handleDelete()
+                                    void handleDelete()
                                 }}
                                 className="h-8 w-8 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                                 aria-label="Delete task"
