@@ -3,6 +3,7 @@ import {Button} from '@/common/components/ui/button';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/common/components/ui/select';
 import {Skeleton} from '@/common/components/ui/skeleton';
 import {useGetTasksQuery, useReorderTaskMutation} from '@/feature/todolists/api/tasksApi';
+import type {DomainTask} from '@/feature/todolists/api/tasksApi.types';
 import type {DomainTodolist, GlobalTaskFilters} from '@/feature/todolists/libs/types';
 import {EmptyState} from '@/feature/todolists/ui/Todolists/Todolist/EmptyState.tsx';
 import {TaskItem} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/TaskItem\'/TaskItem.tsx';
@@ -15,7 +16,11 @@ import type {TaskStats} from '@/app/main/model/types';
 type TasksPropsType = {
     todolist: DomainTodolist
     globalTaskFilters: GlobalTaskFilters
+    tasks?: DomainTask[]
     allowTaskReorder?: boolean
+    onUpdateTask?: (taskId: string, changes: Partial<DomainTask>) => Promise<void> | void
+    onDeleteTask?: (taskId: string) => Promise<void> | void
+    onReorderTasks?: (orderedTaskIds: string[]) => Promise<void> | void
     onStatsChange?: (stats: TaskStats) => void
 }
 
@@ -159,8 +164,18 @@ const matchesDueFilter = (due: GlobalTaskFilters['due'], deadline: string | null
     return true
 }
 
-export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onStatsChange}: TasksPropsType) => {
+export const Tasks = ({
+    todolist,
+    globalTaskFilters,
+    tasks: localTasks,
+    allowTaskReorder = true,
+    onUpdateTask,
+    onDeleteTask,
+    onReorderTasks,
+    onStatsChange,
+}: TasksPropsType) => {
     const { id, filter } = todolist
+    const isLocalTasksMode = Array.isArray(localTasks)
     const hasActiveGlobalFilters = Boolean(
         globalTaskFilters.query.trim() ||
         globalTaskFilters.status !== 'all' ||
@@ -180,7 +195,9 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
     const { data, isLoading } = useGetTasksQuery({
         todolistId: id,
         params: { page: hasActiveGlobalFilters ? 1 : page, count: requestPageSize },
-    })
+    }, { skip: isLocalTasksMode })
+    const sourceTasks = localTasks ?? data?.items ?? []
+    const totalTasksCount = isLocalTasksMode ? sourceTasks.length : (data?.totalCount ?? 0)
 
     useEffect(() => {
         setPage(1)
@@ -188,62 +205,60 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
     }, [filter, id, globalTaskFilters.query, globalTaskFilters.status, globalTaskFilters.priority, globalTaskFilters.due])
 
     useEffect(() => {
-        if (!hasActiveGlobalFilters || !data) {
+        if (isLocalTasksMode || !hasActiveGlobalFilters || !data) {
             return
         }
 
         if (data.totalCount > filteredRequestPageSize) {
             setFilteredRequestPageSize(data.totalCount)
         }
-    }, [data, filteredRequestPageSize, hasActiveGlobalFilters])
+    }, [data, filteredRequestPageSize, hasActiveGlobalFilters, isLocalTasksMode])
 
     useEffect(() => {
         setOrderedTaskIds(null)
         setDraggedTaskId(null)
         setDragOverTaskId(null)
-    }, [data, filter, hasActiveGlobalFilters, page, id])
+    }, [filter, hasActiveGlobalFilters, id, page, sourceTasks])
 
     useEffect(() => {
-        if (!data) return
-        const totalPages = Math.max(1, Math.ceil(data.totalCount / pageSize))
+        const totalPages = Math.max(1, Math.ceil(totalTasksCount / pageSize))
         if (page > totalPages) {
             setPage(totalPages)
         }
-    }, [data, page, pageSize])
+    }, [page, pageSize, totalTasksCount])
 
-    let filteredTasks = data?.items
+    let filteredTasks = sourceTasks
     if (filter === "active") {
-        filteredTasks = filteredTasks?.filter((task) => task.status === TaskStatus.New)
+        filteredTasks = filteredTasks.filter((task) => task.status === TaskStatus.New)
     }
     if (filter === "completed") {
-        filteredTasks = filteredTasks?.filter((task) => task.status === TaskStatus.Completed)
+        filteredTasks = filteredTasks.filter((task) => task.status === TaskStatus.Completed)
     }
 
     if (globalTaskFilters.query.trim()) {
         const normalizedQuery = globalTaskFilters.query.trim().toLowerCase()
-        filteredTasks = filteredTasks?.filter((task) =>
+        filteredTasks = filteredTasks.filter((task) =>
             task.title.toLowerCase().includes(normalizedQuery) ||
             (task.description?.toLowerCase().includes(normalizedQuery) ?? false),
         )
     }
 
     if (globalTaskFilters.status !== 'all') {
-        filteredTasks = filteredTasks?.filter((task) => String(task.status) === globalTaskFilters.status)
+        filteredTasks = filteredTasks.filter((task) => String(task.status) === globalTaskFilters.status)
     }
 
     if (globalTaskFilters.priority !== 'all') {
-        filteredTasks = filteredTasks?.filter((task) => String(task.priority) === globalTaskFilters.priority)
+        filteredTasks = filteredTasks.filter((task) => String(task.priority) === globalTaskFilters.priority)
     }
 
     if (globalTaskFilters.due !== 'all') {
-        filteredTasks = filteredTasks?.filter((task) => matchesDueFilter(globalTaskFilters.due, task.deadline))
+        filteredTasks = filteredTasks.filter((task) => matchesDueFilter(globalTaskFilters.due, task.deadline))
     }
 
-    const matchedTasksCount = filteredTasks?.length ?? 0
-    const totalTasksCount = data?.totalCount ?? 0
-    const completedTasksCount = filteredTasks?.filter((task) => task.status === TaskStatus.Completed).length ?? 0
-    const overdueTasksCount = filteredTasks?.filter((task) => matchesDueFilter('overdue', task.deadline)).length ?? 0
-    const todayTasksCount = filteredTasks?.filter((task) => matchesDueFilter('today', task.deadline)).length ?? 0
+    const matchedTasksCount = filteredTasks.length
+    const completedTasksCount = filteredTasks.filter((task) => task.status === TaskStatus.Completed).length
+    const overdueTasksCount = filteredTasks.filter((task) => matchesDueFilter('overdue', task.deadline)).length
+    const todayTasksCount = filteredTasks.filter((task) => matchesDueFilter('today', task.deadline)).length
 
     useEffect(() => {
         onStatsChange?.({
@@ -258,7 +273,7 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
     const reorderEnabled = allowTaskReorder && filter === 'all' && !hasActiveGlobalFilters
 
     const tasksToRender = orderedTaskIds
-        ? [...(filteredTasks ?? [])].sort(
+        ? [...filteredTasks].sort(
             (firstTask, secondTask) => orderedTaskIds.indexOf(firstTask.id) - orderedTaskIds.indexOf(secondTask.id),
         )
         : filteredTasks
@@ -292,7 +307,7 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
     }
 
     const handleDrop = async () => {
-        if (!reorderEnabled || !draggedTaskId || !orderedTaskIds || !filteredTasks?.length) {
+        if (!reorderEnabled || !draggedTaskId || !orderedTaskIds || !filteredTasks.length) {
             setDraggedTaskId(null)
             setDragOverTaskId(null)
             return
@@ -317,7 +332,11 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
         const putAfterItemId = targetIndex > 0 ? orderedTaskIds[targetIndex - 1] : null
 
         try {
-            await reorderTask({ todolistId: id, taskId: draggedTaskId, putAfterItemId }).unwrap()
+            if (onReorderTasks) {
+                await onReorderTasks(orderedTaskIds)
+            } else {
+                await reorderTask({ todolistId: id, taskId: draggedTaskId, putAfterItemId }).unwrap()
+            }
         } catch (error) {
             toast.error(getTaskActionErrorMessage('reorder', error))
             console.error('Error reordering tasks:', error)
@@ -333,11 +352,11 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
         setDragOverTaskId(null)
     }
 
-    if (isLoading) {
+    if (!isLocalTasksMode && isLoading) {
         return <TasksSkeleton />
     }
 
-    if (!filteredTasks?.length) {
+    if (!filteredTasks.length) {
         const emptyCopy = hasActiveGlobalFilters ? {
             title: 'No tasks match these filters',
             description: 'Change the global search or filter settings to see matching tasks across your lists.',
@@ -372,7 +391,7 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
             ) : null}
             <div className="overflow-x-hidden">
                 <div className="space-y-2">
-                    {tasksToRender?.map(task => (
+                    {tasksToRender.map(task => (
                         <div
                             key={task.id}
                             className="overflow-hidden rounded-2xl border border-border/60 bg-background/70"
@@ -388,14 +407,16 @@ export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onS
                                 dragOver={dragOverTaskId === task.id && draggedTaskId !== task.id}
                                 onDragStart={() => handleDragStart(task.id)}
                                 onDragEnd={handleDragEnd}
+                                onUpdateTask={onUpdateTask ? (changes) => onUpdateTask(task.id, changes) : undefined}
+                                onDeleteTask={onDeleteTask ? () => onDeleteTask(task.id) : undefined}
                             />
                         </div>
                     ))}
                 </div>
             </div>
-            {data && !hasActiveGlobalFilters && filter === 'all' && data.totalCount > pageSize && (
+            {!hasActiveGlobalFilters && filter === 'all' && totalTasksCount > pageSize && (
                 <TasksPagination
-                    totalCount={data.totalCount}
+                    totalCount={totalTasksCount}
                     page={page}
                     setPage={setPage}
                     pageSize={pageSize}

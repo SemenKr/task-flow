@@ -6,6 +6,7 @@ import {cn} from '@/common/lib/utils.ts';
 import {Title} from '@/common/components/ui/title.tsx';
 import {CreateItemForm} from '@/CreateItemForm.tsx';
 import {useAddTaskMutation} from '@/feature/todolists/api/tasksApi';
+import type {DomainTask} from '@/feature/todolists/api/tasksApi.types';
 import {useRemoveTodolistMutation, useUpdateTodolistTitleMutation} from '@/feature/todolists/api/todolistsApi';
 import type {DomainTodolist, GlobalTaskFilters} from '@/feature/todolists/libs/types';
 import {FilterButtons} from '@/feature/todolists/ui/Todolists/Todolist/FilterButtons.tsx';
@@ -19,7 +20,14 @@ import type {TaskStats} from '@/app/main/model/types';
 type TodolistItemPropsType = {
     todolist: DomainTodolist
     globalTaskFilters: GlobalTaskFilters
+    tasks?: DomainTask[]
     allowTaskReorder?: boolean
+    onRenameTodolist?: (title: string) => Promise<void> | void
+    onDeleteTodolist?: () => Promise<void> | void
+    onAddTask?: (title: string) => Promise<void> | void
+    onUpdateTask?: (taskId: string, changes: Partial<DomainTask>) => Promise<void> | void
+    onDeleteTask?: (taskId: string) => Promise<void> | void
+    onReorderTasks?: (orderedTaskIds: string[]) => Promise<void> | void
     matchedTasksCount?: number
     totalTasksCount?: number
     selected?: boolean
@@ -30,7 +38,14 @@ type TodolistItemPropsType = {
 export const TodolistItem = ({
     todolist,
     globalTaskFilters,
+    tasks,
     allowTaskReorder = true,
+    onRenameTodolist,
+    onDeleteTodolist,
+    onAddTask,
+    onUpdateTask,
+    onDeleteTask,
+    onReorderTasks,
     matchedTasksCount,
     totalTasksCount,
     selected = false,
@@ -43,7 +58,10 @@ export const TodolistItem = ({
     const [addTask, { isLoading: isAddingTask }] = useAddTaskMutation()
     const [removeTodolist, { isLoading: isRemovingTodolist }] = useRemoveTodolistMutation()
     const [updateTodolistTitle, { isLoading: isUpdatingTitle }] = useUpdateTodolistTitleMutation()
-    const isBusy = isAddingTask || isRemovingTodolist || isUpdatingTitle
+    const isAddingTaskWithFallback = !onAddTask && isAddingTask
+    const isRemovingTodolistWithFallback = !onDeleteTodolist && isRemovingTodolist
+    const isUpdatingTitleWithFallback = !onRenameTodolist && isUpdatingTitle
+    const isBusy = isAddingTaskWithFallback || isRemovingTodolistWithFallback || isUpdatingTitleWithFallback
 
     const filterLabel = {
         all: 'All tasks',
@@ -56,12 +74,27 @@ export const TodolistItem = ({
     }, [title])
 
     const deleteTodolist = () => {
-        if (isRemovingTodolist) return
+        if (isRemovingTodolistWithFallback) return
+
+        if (onDeleteTodolist) {
+            void Promise.resolve(onDeleteTodolist())
+            return
+        }
+
         removeTodolist(id)
     }
 
     const createTask = (title: string) => {
-        if (isAddingTask) return
+        if (isAddingTaskWithFallback) return
+
+        if (onAddTask) {
+            void Promise.resolve(onAddTask(title)).catch((error) => {
+                toast.error(getTaskActionErrorMessage('create', error))
+                console.error('Error creating task:', error)
+            })
+            return
+        }
+
         void addTask({ todolistId: todolist.id, title })
             .unwrap()
             .catch((error) => {
@@ -105,7 +138,11 @@ export const TodolistItem = ({
         }
 
         try {
-            await updateTodolistTitle({ id, title: trimmedTitle }).unwrap()
+            if (onRenameTodolist) {
+                await onRenameTodolist(trimmedTitle)
+            } else {
+                await updateTodolistTitle({ id, title: trimmedTitle }).unwrap()
+            }
             toast.success('List title updated')
             setIsEditingTitle(false)
         } catch (error) {
@@ -154,14 +191,14 @@ export const TodolistItem = ({
                                         onKeyDown={handleTitleKeyDown}
                                         className="h-10 rounded-2xl text-sm"
                                         maxLength={50}
-                                        disabled={isUpdatingTitle}
+                                        disabled={isUpdatingTitleWithFallback}
                                         autoFocus
                                     />
                                     <div className="flex items-center gap-2">
                                         <Button
                                             size="sm"
                                             onClick={() => void saveTitle()}
-                                            disabled={isUpdatingTitle}
+                                            disabled={isUpdatingTitleWithFallback}
                                             className="rounded-full"
                                         >
                                             <Check className="h-4 w-4" />
@@ -171,7 +208,7 @@ export const TodolistItem = ({
                                             variant="outline"
                                             size="sm"
                                             onClick={cancelEditingTitle}
-                                            disabled={isUpdatingTitle}
+                                            disabled={isUpdatingTitleWithFallback}
                                             className="rounded-full"
                                         >
                                             <X className="h-4 w-4" />
@@ -207,7 +244,7 @@ export const TodolistItem = ({
                         variant="ghost"
                         size="icon-sm"
                         onClick={deleteTodolist}
-                        disabled={isRemovingTodolist}
+                        disabled={isRemovingTodolistWithFallback}
                         aria-label="Delete list"
                         className="mt-1 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
                     >
@@ -254,7 +291,11 @@ export const TodolistItem = ({
                     <Tasks
                         todolist={todolist}
                         globalTaskFilters={globalTaskFilters}
+                        tasks={tasks}
                         allowTaskReorder={allowTaskReorder}
+                        onUpdateTask={onUpdateTask}
+                        onDeleteTask={onDeleteTask}
+                        onReorderTasks={onReorderTasks}
                         onStatsChange={onTasksStatsChange}
                     />
                 </section>

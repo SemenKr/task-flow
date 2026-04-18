@@ -1,4 +1,3 @@
-import {CreateItemForm} from '@/CreateItemForm'
 import {
     createGlobalTaskSearchParams,
     getActiveGlobalTaskFiltersCount,
@@ -27,29 +26,16 @@ import {TodolistsPageHeader} from '@/app/main/ui/TodolistsPageHeader'
 import {TodolistsSidebar} from '@/app/main/ui/TodolistsSidebar'
 import {Badge} from '@/common/components/ui/badge'
 import {Button} from '@/common/components/ui/button'
-import {Card, CardContent, CardHeader} from '@/common/components/ui/card'
-import {Input} from '@/common/components/ui/input'
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/common/components/ui/select'
-import {Title} from '@/common/components/ui/title'
 import {TaskPriority, TaskStatus} from '@/common/enums'
-import {cn} from '@/common/lib/utils'
 import type {DomainTask} from '@/feature/todolists/api/tasksApi.types'
 import {AddTodolistDialog} from '@/feature/todolists/ui/Todolists/Todolist/AddTodolistDialog'
-import {TaskItem} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/TaskItem\'/TaskItem.tsx'
-import {EmptyState} from '@/feature/todolists/ui/Todolists/Todolist/EmptyState'
+import {TodolistItem} from '@/feature/todolists/ui/Todolists/TodolistItem/TodolistItem'
 import {EmptyTodolistsState} from '@/feature/todolists/ui/Todolists/EmptyTodolistsState/EmptyTodolistsState'
 import type {DomainTodolist, FilterValues, GlobalTaskFilters} from '@/feature/todolists/libs/types'
 import {
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    Edit2,
-    FolderKanban,
     Sparkles,
-    Trash2,
-    X,
 } from 'lucide-react'
-import {KeyboardEvent, useCallback, useEffect, useMemo, useState} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useSearchParams} from 'react-router'
 import {toast} from 'sonner'
 
@@ -58,35 +44,6 @@ type DemoWorkspace = {
     tasksByListId: Record<string, DomainTask[]>
 }
 
-type DemoTasksProps = {
-    todolist: DomainTodolist
-    tasks: DomainTask[]
-    globalTaskFilters: GlobalTaskFilters
-    allowTaskReorder: boolean
-    onUpdateTask: (taskId: string, changes: Partial<DomainTask>) => void
-    onDeleteTask: (taskId: string) => void
-    onReorderTasks: (taskIds: string[]) => void
-}
-
-type DemoTodolistItemProps = {
-    todolist: DomainTodolist
-    tasks: DomainTask[]
-    globalTaskFilters: GlobalTaskFilters
-    matchedTasksCount?: number
-    totalTasksCount?: number
-    selected?: boolean
-    onSelect?: () => void
-    onUpdateTitle: (title: string) => void
-    onDelete: () => void
-    onSetFilter: (filter: FilterValues) => void
-    allowTaskReorder: boolean
-    onAddTask: (title: string) => void
-    onUpdateTask: (taskId: string, changes: Partial<DomainTask>) => void
-    onDeleteTask: (taskId: string) => void
-    onReorderTasks: (taskIds: string[]) => void
-}
-
-const pageSizeOptions = [4, 6, 8, 12]
 const DEMO_WORKSPACE_STORAGE_KEY = 'demo-workspace'
 
 const createId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`
@@ -307,439 +264,6 @@ const computeTaskStats = (
         overdue: filteredTasks.filter((task) => matchesDueFilter('overdue', task.deadline)).length,
         today: filteredTasks.filter((task) => matchesDueFilter('today', task.deadline)).length,
     }
-}
-
-const DemoTasks = ({
-    todolist,
-    tasks,
-    globalTaskFilters,
-    allowTaskReorder,
-    onUpdateTask,
-    onDeleteTask,
-    onReorderTasks,
-}: DemoTasksProps) => {
-    const hasActiveGlobalFilters = hasActiveGlobalTaskFilters(globalTaskFilters)
-    const [page, setPage] = useState(1)
-    const [pageSize, setPageSize] = useState(6)
-    const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
-    const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null)
-    const [orderedTaskIds, setOrderedTaskIds] = useState<string[] | null>(null)
-
-    useEffect(() => {
-        setPage(1)
-    }, [globalTaskFilters, todolist.filter, todolist.id])
-
-    useEffect(() => {
-        setOrderedTaskIds(null)
-        setDraggedTaskId(null)
-        setDragOverTaskId(null)
-    }, [tasks, todolist.filter, hasActiveGlobalFilters, page])
-
-    const filteredTasks = useMemo(
-        () => getFilteredTasks(tasks, todolist.filter, globalTaskFilters),
-        [globalTaskFilters, tasks, todolist.filter],
-    )
-
-    const reorderEnabled = allowTaskReorder && todolist.filter === 'all' && !hasActiveGlobalFilters
-    const orderedTasks = orderedTaskIds
-        ? [...filteredTasks].sort(
-            (firstTask, secondTask) => orderedTaskIds.indexOf(firstTask.id) - orderedTaskIds.indexOf(secondTask.id),
-        )
-        : filteredTasks
-
-    const totalPages = Math.max(1, Math.ceil(orderedTasks.length / pageSize))
-    const normalizedPage = Math.min(page, totalPages)
-    const paginatedTasks = hasActiveGlobalFilters
-        ? orderedTasks
-        : orderedTasks.slice((normalizedPage - 1) * pageSize, normalizedPage * pageSize)
-
-    useEffect(() => {
-        if (page !== normalizedPage) {
-            setPage(normalizedPage)
-        }
-    }, [normalizedPage, page])
-
-    const handleDragStart = (taskId: string) => {
-        if (!reorderEnabled) return
-
-        setDraggedTaskId(taskId)
-        setDragOverTaskId(taskId)
-        setOrderedTaskIds((prev) => prev ?? orderedTasks.map((task) => task.id))
-    }
-
-    const handleDragEnter = (taskId: string) => {
-        if (!reorderEnabled || !draggedTaskId || draggedTaskId === taskId) return
-
-        setOrderedTaskIds((prev) => moveDraggedItem(prev ?? orderedTasks.map((task) => task.id), draggedTaskId, taskId))
-        setDragOverTaskId(taskId)
-    }
-
-    const handleDrop = () => {
-        if (!reorderEnabled || !draggedTaskId || !orderedTaskIds?.length) {
-            setDraggedTaskId(null)
-            setDragOverTaskId(null)
-            return
-        }
-
-        const previewOrderedTaskIds = orderedTaskIds
-        const originalIds = orderedTasks.map((task) => task.id)
-
-        if (originalIds.join('|') === previewOrderedTaskIds.join('|')) {
-            setDraggedTaskId(null)
-            setDragOverTaskId(null)
-            setOrderedTaskIds(null)
-            return
-        }
-
-        onReorderTasks(previewOrderedTaskIds)
-        toast.success('Task order updated')
-        setDraggedTaskId(null)
-        setDragOverTaskId(null)
-        setOrderedTaskIds(null)
-    }
-
-    const handleDragEnd = () => {
-        setDraggedTaskId(null)
-        setDragOverTaskId(null)
-        setOrderedTaskIds(null)
-    }
-
-    if (!filteredTasks.length) {
-        const emptyCopy = hasActiveGlobalFilters ? {
-            title: 'No tasks match these filters',
-            description: 'Change the global search or filter settings to see matching tasks across your lists.',
-            hint: 'Filters are synced with the URL and applied to every board.',
-        } : {
-            all: {
-                title: 'No tasks yet',
-                description: 'Create the first task for this list to start building momentum.',
-                hint: 'Use the input above to add your first item.',
-            },
-            active: {
-                title: 'Nothing active right now',
-                description: 'All current tasks are completed or the list is still empty.',
-                hint: 'Switch filters or add a new task to continue.',
-            },
-            completed: {
-                title: 'No completed tasks yet',
-                description: 'Once you finish work, completed items will appear in this filtered view.',
-                hint: 'Mark tasks as done to build a visible track record.',
-            },
-        }[todolist.filter]
-
-        return <EmptyState {...emptyCopy} />
-    }
-
-    return (
-        <div className="space-y-2">
-            {reorderEnabled ? (
-                <div className="px-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                    Drag tasks to reorder
-                </div>
-            ) : null}
-
-            <div className="space-y-2 overflow-x-hidden">
-                {paginatedTasks.map((task) => (
-                    <div
-                        key={task.id}
-                        className="overflow-hidden rounded-2xl border border-border/60 bg-background/70"
-                        onDragEnter={reorderEnabled ? () => handleDragEnter(task.id) : undefined}
-                        onDragOver={reorderEnabled ? (event) => event.preventDefault() : undefined}
-                        onDrop={reorderEnabled ? handleDrop : undefined}
-                    >
-                        <TaskItem
-                            todolistId={todolist.id}
-                            task={task}
-                            reorderEnabled={reorderEnabled}
-                            dragging={draggedTaskId === task.id}
-                            dragOver={dragOverTaskId === task.id && draggedTaskId !== task.id}
-                            onDragStart={() => handleDragStart(task.id)}
-                            onDragEnd={handleDragEnd}
-                            onUpdateTask={(changes) => onUpdateTask(task.id, changes)}
-                            onDeleteTask={() => onDeleteTask(task.id)}
-                        />
-                    </div>
-                ))}
-            </div>
-
-            {!hasActiveGlobalFilters && orderedTasks.length > pageSize ? (
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/60 bg-muted/25 px-3 py-2">
-                    <div className="min-w-0 text-sm text-muted-foreground">
-                        {orderedTasks.length} tasks · page {normalizedPage}/{totalPages}
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="outline"
-                            size="icon-sm"
-                            onClick={() => setPage((prev) => prev - 1)}
-                            disabled={normalizedPage <= 1}
-                            aria-label="Previous page"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="icon-sm"
-                            onClick={() => setPage((prev) => prev + 1)}
-                            disabled={normalizedPage >= totalPages}
-                            aria-label="Next page"
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Show</span>
-                        <Select
-                            value={String(pageSize)}
-                            onValueChange={(value) => {
-                                const nextSize = Number(value)
-                                if (Number.isNaN(nextSize)) {
-                                    return
-                                }
-                                setPageSize(nextSize)
-                                setPage(1)
-                            }}
-                        >
-                            <SelectTrigger size="sm" className="w-18">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {pageSizeOptions.map((size) => (
-                                    <SelectItem key={size} value={String(size)}>
-                                        {size}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-            ) : null}
-        </div>
-    )
-}
-
-const DemoTodolistItem = ({
-    todolist,
-    tasks,
-    globalTaskFilters,
-    matchedTasksCount,
-    totalTasksCount,
-    selected = false,
-    onSelect,
-    onUpdateTitle,
-    onDelete,
-    onSetFilter,
-    allowTaskReorder,
-    onAddTask,
-    onUpdateTask,
-    onDeleteTask,
-    onReorderTasks,
-}: DemoTodolistItemProps) => {
-    const [isEditingTitle, setIsEditingTitle] = useState(false)
-    const [titleValue, setTitleValue] = useState(todolist.title)
-
-    useEffect(() => {
-        setTitleValue(todolist.title)
-    }, [todolist.title])
-
-    const filterLabel = {
-        all: 'All tasks',
-        active: 'Active only',
-        completed: 'Completed only',
-    }[todolist.filter]
-
-    const saveTitle = () => {
-        const trimmedTitle = titleValue.trim()
-
-        if (!trimmedTitle) {
-            toast.error('List name cannot be empty')
-            return
-        }
-
-        if (trimmedTitle.length < 2) {
-            toast.error('List name must be at least 2 characters long')
-            return
-        }
-
-        if (trimmedTitle.length > 50) {
-            toast.error('List name is too long (max 50 characters)')
-            return
-        }
-
-        if (trimmedTitle === todolist.title) {
-            setIsEditingTitle(false)
-            return
-        }
-
-        onUpdateTitle(trimmedTitle)
-        toast.success('List title updated')
-        setIsEditingTitle(false)
-    }
-
-    const handleTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter') {
-            event.preventDefault()
-            saveTitle()
-        }
-
-        if (event.key === 'Escape') {
-            event.preventDefault()
-            setTitleValue(todolist.title)
-            setIsEditingTitle(false)
-        }
-    }
-
-    return (
-        <Card
-            className={cn(
-                'group flex h-full w-full flex-col overflow-hidden border-border/60 bg-card/92 shadow-[0_26px_70px_-62px_rgba(15,23,42,0.95)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_90px_-64px_rgba(15,23,42,1)]',
-                selected && 'border-primary/35 shadow-[0_28px_90px_-62px_rgba(37,99,235,0.42)]',
-            )}
-            onClick={onSelect}
-        >
-            <CardHeader className="min-h-[10.5rem] gap-3 border-b border-border/60 pb-4">
-                <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1 space-y-2.5">
-                        <div className="flex items-center gap-3">
-                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                <FolderKanban className="h-4.5 w-4.5" />
-                            </span>
-                            <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                                Demo board
-                            </div>
-                        </div>
-                        <div className="min-h-[3.5rem]">
-                            {isEditingTitle ? (
-                                <div className="space-y-2.5">
-                                    <Input
-                                        value={titleValue}
-                                        onChange={(event) => setTitleValue(event.target.value)}
-                                        onKeyDown={handleTitleKeyDown}
-                                        className="h-10 rounded-2xl text-sm"
-                                        maxLength={50}
-                                        autoFocus
-                                    />
-                                    <div className="flex items-center gap-2">
-                                        <Button size="sm" onClick={saveTitle} className="rounded-full">
-                                            <Check className="h-4 w-4" />
-                                            Save
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                setTitleValue(todolist.title)
-                                                setIsEditingTitle(false)
-                                            }}
-                                            className="rounded-full"
-                                        >
-                                            <X className="h-4 w-4" />
-                                            Cancel
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex min-w-0 items-start gap-2">
-                                    <Title
-                                        level={3}
-                                        noMargin
-                                        className="min-w-0 flex-1 font-display text-xl leading-tight [overflow-wrap:anywhere]"
-                                    >
-                                        {todolist.title}
-                                    </Title>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={(event) => {
-                                            event.stopPropagation()
-                                            setIsEditingTitle(true)
-                                        }}
-                                        aria-label="Edit list title"
-                                        className="mt-0.5 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                                    >
-                                        <Edit2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={(event) => {
-                            event.stopPropagation()
-                            onDelete()
-                        }}
-                        aria-label="Delete list"
-                        className="mt-1 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="rounded-full px-2.5 py-1 text-[11px]">
-                        {filterLabel}
-                    </Badge>
-                    <Badge variant="secondary" className="rounded-full px-2.5 py-1 text-[11px]">
-                        Local only
-                    </Badge>
-                    {typeof matchedTasksCount === 'number' && typeof totalTasksCount === 'number' ? (
-                        <Badge variant="secondary" className="rounded-full px-2.5 py-1 text-[11px]">
-                            {matchedTasksCount}/{totalTasksCount} shown
-                        </Badge>
-                    ) : null}
-                </div>
-            </CardHeader>
-
-            <CardContent className="flex flex-1 flex-col gap-4 pt-5">
-                <section className="rounded-[1.35rem] border border-border/60 bg-background/70 p-3">
-                    <p className="mb-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                        New task
-                    </p>
-                    <CreateItemForm
-                        onAdd={onAddTask}
-                        placeholder="Add a task and press Enter"
-                    />
-                </section>
-
-                <section className="rounded-[1.35rem] border border-border/60 bg-background/70 p-2.5">
-                    <p className="mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                        Filter
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 rounded-2xl bg-muted/55 p-1">
-                        {(['all', 'active', 'completed'] as FilterValues[]).map((filter) => (
-                            <Button
-                                key={filter}
-                                size="sm"
-                                variant={todolist.filter === filter ? 'outline' : 'ghost'}
-                                className="rounded-xl px-3"
-                                onClick={() => onSetFilter(filter)}
-                            >
-                                {filter === 'all' ? 'All' : filter === 'active' ? 'Active' : 'Completed'}
-                            </Button>
-                        ))}
-                    </div>
-                </section>
-
-                <section className="flex flex-1 flex-col rounded-[1.5rem] border border-border/60 bg-muted/[0.22] p-2">
-                    <div className="px-2 pb-2 pt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                        Tasks
-                    </div>
-                    <DemoTasks
-                        todolist={todolist}
-                        tasks={tasks}
-                        globalTaskFilters={globalTaskFilters}
-                        allowTaskReorder={allowTaskReorder}
-                        onUpdateTask={onUpdateTask}
-                        onDeleteTask={onDeleteTask}
-                        onReorderTasks={onReorderTasks}
-                    />
-                </section>
-            </CardContent>
-        </Card>
-    )
 }
 
 export const DemoMain = () => {
@@ -1159,18 +683,19 @@ export const DemoMain = () => {
                         <div className="dashboard-grid">
                             {displayTodolists.map((list) => (
                                 <div key={list.id} id={`demo-list-card-${list.id}`} className="min-w-0">
-                                    <DemoTodolistItem
+                                    <TodolistItem
                                         todolist={list}
-                                        tasks={workspace.tasksByListId[list.id] ?? []}
                                         globalTaskFilters={globalTaskFilters}
+                                        tasks={workspace.tasksByListId[list.id] ?? []}
+                                        allowTaskReorder={!isTouchDevice}
                                         matchedTasksCount={tasksStatsByListId[list.id]?.matched}
                                         totalTasksCount={tasksStatsByListId[list.id]?.total}
                                         selected={selectedListId === list.id}
                                         onSelect={() => setActiveList(list.id)}
-                                        onUpdateTitle={(title) => updateList(list.id, (currentList) => ({...currentList, title}))}
-                                        onDelete={() => deleteList(list.id)}
-                                        onSetFilter={(filter) => updateList(list.id, (currentList) => ({...currentList, filter}))}
-                                        allowTaskReorder={!isTouchDevice}
+                                        onRenameTodolist={(title) =>
+                                            updateList(list.id, (currentList) => ({...currentList, title}))
+                                        }
+                                        onDeleteTodolist={() => deleteList(list.id)}
                                         onAddTask={(title) => addTask(list.id, title)}
                                         onUpdateTask={(taskId, changes) => updateTask(list.id, taskId, changes)}
                                         onDeleteTask={(taskId) => deleteTask(list.id, taskId)}
