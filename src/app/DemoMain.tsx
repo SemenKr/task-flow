@@ -28,39 +28,24 @@ import {TodolistsSidebar} from '@/app/main/ui/TodolistsSidebar'
 import {Badge} from '@/common/components/ui/badge'
 import {Button} from '@/common/components/ui/button'
 import {Card, CardContent, CardHeader} from '@/common/components/ui/card'
-import {Checkbox} from '@/common/components/ui/checkbox'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/common/components/ui/dialog'
 import {Input} from '@/common/components/ui/input'
-import {Label} from '@/common/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/common/components/ui/select'
 import {Title} from '@/common/components/ui/title'
 import {TaskPriority, TaskStatus} from '@/common/enums'
 import {cn} from '@/common/lib/utils'
 import type {DomainTask} from '@/feature/todolists/api/tasksApi.types'
 import {AddTodolistDialog} from '@/feature/todolists/ui/Todolists/Todolist/AddTodolistDialog'
+import {TaskItem} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/TaskItem\'/TaskItem.tsx'
 import {EmptyState} from '@/feature/todolists/ui/Todolists/Todolist/EmptyState'
 import {EmptyTodolistsState} from '@/feature/todolists/ui/Todolists/EmptyTodolistsState/EmptyTodolistsState'
 import type {DomainTodolist, FilterValues, GlobalTaskFilters} from '@/feature/todolists/libs/types'
 import {
-    CalendarDays,
     Check,
-    ChevronDown,
     ChevronLeft,
     ChevronRight,
-    ChevronUp,
     Edit2,
-    Flag,
     FolderKanban,
-    GripVertical,
     Sparkles,
-    Timer,
     Trash2,
     X,
 } from 'lucide-react'
@@ -71,27 +56,6 @@ import {toast} from 'sonner'
 type DemoWorkspace = {
     lists: DomainTodolist[]
     tasksByListId: Record<string, DomainTask[]>
-}
-
-type DemoTaskFormValues = {
-    title: string
-    description: string
-    status: string
-    priority: string
-    startDate: string
-    deadline: string
-}
-
-type DemoTaskItemProps = {
-    todolistId: string
-    task: DomainTask
-    reorderEnabled?: boolean
-    dragging?: boolean
-    dragOver?: boolean
-    onDragStart?: () => void
-    onDragEnd?: () => void
-    onUpdateTask: (taskId: string, changes: Partial<DomainTask>) => void
-    onDeleteTask: (taskId: string) => void
 }
 
 type DemoTasksProps = {
@@ -345,369 +309,6 @@ const computeTaskStats = (
     }
 }
 
-const toDateTimeInputValue = (value: string | null) => (value ? value.slice(0, 16) : '')
-
-const toApiDateTimeValue = (value: string) => (value ? `${value}:00` : null)
-
-const createFormValues = (task: DomainTask): DemoTaskFormValues => ({
-    title: task.title,
-    description: task.description ?? '',
-    status: String(task.status),
-    priority: String(task.priority),
-    startDate: toDateTimeInputValue(task.startDate),
-    deadline: toDateTimeInputValue(task.deadline),
-})
-
-const formatDate = (value: string | null) => {
-    if (!value) return null
-
-    return new Intl.DateTimeFormat('en', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    }).format(new Date(value))
-}
-
-const DemoTaskItem = ({
-    todolistId,
-    task,
-    reorderEnabled = false,
-    dragging = false,
-    dragOver = false,
-    onDragStart,
-    onDragEnd,
-    onUpdateTask,
-    onDeleteTask,
-}: DemoTaskItemProps) => {
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-    const [formValues, setFormValues] = useState<DemoTaskFormValues>(() => createFormValues(task))
-
-    const isTaskCompleted = task.status === TaskStatus.Completed
-    const isTaskInProgress = task.status === TaskStatus.InProgress
-    const createdAt = formatDate(task.addedDate)
-    const startDate = formatDate(task.startDate)
-    const deadline = formatDate(task.deadline)
-    const hasDetails = Boolean(task.description || createdAt || startDate || deadline)
-
-    useEffect(() => {
-        setFormValues(createFormValues(task))
-    }, [task])
-
-    const statusLabel = {
-        [TaskStatus.New]: 'New',
-        [TaskStatus.InProgress]: 'In progress',
-        [TaskStatus.Completed]: 'Done',
-        [TaskStatus.Draft]: 'Draft',
-    }[task.status]
-
-    const priorityLabel = {
-        [TaskPriority.Low]: 'Low',
-        [TaskPriority.Middle]: 'Medium',
-        [TaskPriority.Hi]: 'High',
-        [TaskPriority.Urgently]: 'Urgent',
-        [TaskPriority.Later]: 'Later',
-    }[task.priority]
-
-    const priorityClassName = {
-        [TaskPriority.Low]: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
-        [TaskPriority.Middle]: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300',
-        [TaskPriority.Hi]: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
-        [TaskPriority.Urgently]: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300',
-        [TaskPriority.Later]: 'border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300',
-    }[task.priority]
-
-    const handleFieldChange = (field: keyof DemoTaskFormValues, value: string) => {
-        setFormValues((prev) => ({...prev, [field]: value}))
-    }
-
-    const handleSave = () => {
-        const trimmedTitle = formValues.title.trim()
-
-        if (!trimmedTitle) {
-            toast.error('Task title cannot be empty')
-            return
-        }
-
-        onUpdateTask(task.id, {
-            title: trimmedTitle,
-            description: formValues.description.trim() || null,
-            status: Number(formValues.status) as TaskStatus,
-            priority: Number(formValues.priority) as TaskPriority,
-            startDate: toApiDateTimeValue(formValues.startDate),
-            deadline: toApiDateTimeValue(formValues.deadline),
-        })
-        toast.success('Task updated')
-        setIsDialogOpen(false)
-    }
-
-    const toggleTaskDetails = () => {
-        if (!hasDetails) return
-        setIsDetailsOpen((prev) => !prev)
-    }
-
-    return (
-        <>
-            <div
-                className={cn(
-                    'group flex min-w-0 gap-3 rounded-xl border border-transparent px-3 py-2.5 transition-all duration-200 hover:border-border/60 hover:bg-muted/20',
-                    dragging && 'opacity-55',
-                    dragOver && 'bg-primary/6 ring-1 ring-primary/20',
-                )}
-            >
-                {reorderEnabled ? (
-                    <div
-                        draggable
-                        onDragStart={onDragStart}
-                        onDragEnd={onDragEnd}
-                        className="mt-1 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing"
-                    >
-                        <GripVertical className="h-4 w-4" />
-                    </div>
-                ) : null}
-
-                <Checkbox
-                    checked={isTaskCompleted}
-                    onCheckedChange={(checked) => onUpdateTask(task.id, {
-                        status: checked === true ? TaskStatus.Completed : TaskStatus.New,
-                    })}
-                    id={`${todolistId}-${task.id}`}
-                    aria-label={`Toggle completion for task ${task.title}`}
-                    className="mt-1 shrink-0"
-                />
-
-                <div
-                    className={cn(
-                        'min-w-0 flex-1 transition-all duration-200',
-                        hasDetails && 'cursor-pointer group-hover:translate-x-0.5 active:scale-[0.995]',
-                    )}
-                    onClick={toggleTaskDetails}
-                    onKeyDown={(event) => {
-                        if (!hasDetails) return
-                        if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            toggleTaskDetails()
-                        }
-                    }}
-                    role={hasDetails ? 'button' : undefined}
-                    tabIndex={hasDetails ? 0 : undefined}
-                    aria-expanded={hasDetails ? isDetailsOpen : undefined}
-                >
-                    <div className="flex items-start justify-between gap-2">
-                        <div className="flex min-w-0 flex-1 items-start gap-2">
-                            <div
-                                className={cn(
-                                    'min-w-0 flex-1 select-none break-words text-sm font-medium leading-6 transition-all',
-                                    isTaskCompleted ? 'line-through text-muted-foreground/70' : 'text-foreground',
-                                )}
-                            >
-                                {task.title}
-                            </div>
-                            {hasDetails ? (
-                                <span className="mt-1 shrink-0 text-muted-foreground">
-                                    {isDetailsOpen ? (
-                                        <ChevronUp className="h-4 w-4 transition-transform duration-200" />
-                                    ) : (
-                                        <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-                                    )}
-                                </span>
-                            ) : null}
-                        </div>
-
-                        <div className="flex shrink-0 gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(event) => {
-                                    event.stopPropagation()
-                                    setIsDialogOpen(true)
-                                }}
-                                className="h-9 w-9 shrink-0 hover:bg-blue-50 hover:text-blue-600 sm:h-8 sm:w-8 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-                                aria-label="Edit task"
-                            >
-                                <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(event) => {
-                                    event.stopPropagation()
-                                    onDeleteTask(task.id)
-                                    toast.success('Task deleted')
-                                }}
-                                className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 sm:h-8 sm:w-8 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                                aria-label="Delete task"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:flex-nowrap sm:overflow-hidden sm:whitespace-nowrap sm:[mask-image:linear-gradient(to_right,black_0%,black_84%,transparent_100%)]">
-                        <Badge variant="outline" className="shrink-0 rounded-full px-2 py-0.5 text-[11px]">
-                            {statusLabel}
-                        </Badge>
-                        {isTaskInProgress ? (
-                            <Badge variant="outline" className="shrink-0 rounded-full border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-300">
-                                Active
-                            </Badge>
-                        ) : null}
-                        <Badge variant="outline" className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${priorityClassName}`}>
-                            <Flag className="h-3 w-3" />
-                            {priorityLabel}
-                        </Badge>
-                        {deadline ? (
-                            <Badge variant="secondary" className="shrink-0 rounded-full px-2 py-0.5 text-[11px]">
-                                <Timer className="h-3 w-3" />
-                                {deadline}
-                            </Badge>
-                        ) : null}
-                    </div>
-
-                    {hasDetails ? (
-                        <div
-                            className={cn(
-                                'grid transition-all duration-200 ease-out',
-                                isDetailsOpen ? 'mt-2.5 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
-                            )}
-                        >
-                            <div className="overflow-hidden">
-                                <div className="space-y-2 border-t border-border/50 pt-2.5">
-                                    {task.description ? (
-                                        <p className="break-words text-xs leading-5 text-muted-foreground">
-                                            {task.description}
-                                        </p>
-                                    ) : null}
-
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {createdAt ? (
-                                            <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[11px]">
-                                                <CalendarDays className="h-3 w-3" />
-                                                Created {createdAt}
-                                            </Badge>
-                                        ) : null}
-                                        {startDate ? (
-                                            <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[11px]">
-                                                <CalendarDays className="h-3 w-3" />
-                                                Start {startDate}
-                                            </Badge>
-                                        ) : null}
-                                        {deadline ? (
-                                            <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[11px]">
-                                                <Timer className="h-3 w-3" />
-                                                Due {deadline}
-                                            </Badge>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : null}
-                </div>
-            </div>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="border-border/60 sm:max-w-2xl">
-                    <DialogHeader className="text-left">
-                        <DialogTitle>Edit task</DialogTitle>
-                        <DialogDescription>
-                            Update task details, priority, status, and scheduling fields.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2 sm:col-span-2">
-                            <Label htmlFor={`demo-task-title-${task.id}`}>Title</Label>
-                            <Input
-                                id={`demo-task-title-${task.id}`}
-                                value={formValues.title}
-                                onChange={(event) => handleFieldChange('title', event.target.value)}
-                                className="h-10 rounded-2xl"
-                            />
-                        </div>
-
-                        <div className="space-y-2 sm:col-span-2">
-                            <Label htmlFor={`demo-task-description-${task.id}`}>Description</Label>
-                            <textarea
-                                id={`demo-task-description-${task.id}`}
-                                value={formValues.description}
-                                onChange={(event) => handleFieldChange('description', event.target.value)}
-                                rows={4}
-                                className={cn(
-                                    'border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 w-full rounded-2xl border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]',
-                                )}
-                                placeholder="Add extra context for this task"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Status</Label>
-                            <Select value={formValues.status} onValueChange={(value) => handleFieldChange('status', value)}>
-                                <SelectTrigger className="w-full rounded-2xl">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={String(TaskStatus.New)}>New</SelectItem>
-                                    <SelectItem value={String(TaskStatus.InProgress)}>In progress</SelectItem>
-                                    <SelectItem value={String(TaskStatus.Completed)}>Completed</SelectItem>
-                                    <SelectItem value={String(TaskStatus.Draft)}>Draft</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Priority</Label>
-                            <Select value={formValues.priority} onValueChange={(value) => handleFieldChange('priority', value)}>
-                                <SelectTrigger className="w-full rounded-2xl">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={String(TaskPriority.Low)}>Low</SelectItem>
-                                    <SelectItem value={String(TaskPriority.Middle)}>Medium</SelectItem>
-                                    <SelectItem value={String(TaskPriority.Hi)}>High</SelectItem>
-                                    <SelectItem value={String(TaskPriority.Urgently)}>Urgent</SelectItem>
-                                    <SelectItem value={String(TaskPriority.Later)}>Later</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor={`demo-task-start-date-${task.id}`}>Start date</Label>
-                            <Input
-                                id={`demo-task-start-date-${task.id}`}
-                                type="datetime-local"
-                                value={formValues.startDate}
-                                onChange={(event) => handleFieldChange('startDate', event.target.value)}
-                                className="h-10 rounded-2xl"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor={`demo-task-deadline-${task.id}`}>Deadline</Label>
-                            <Input
-                                id={`demo-task-deadline-${task.id}`}
-                                type="datetime-local"
-                                value={formValues.deadline}
-                                onChange={(event) => handleFieldChange('deadline', event.target.value)}
-                                className="h-10 rounded-2xl"
-                            />
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSave}>
-                            Save changes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </>
-    )
-}
-
 const DemoTasks = ({
     todolist,
     tasks,
@@ -846,7 +447,7 @@ const DemoTasks = ({
                         onDragOver={reorderEnabled ? (event) => event.preventDefault() : undefined}
                         onDrop={reorderEnabled ? handleDrop : undefined}
                     >
-                        <DemoTaskItem
+                        <TaskItem
                             todolistId={todolist.id}
                             task={task}
                             reorderEnabled={reorderEnabled}
@@ -854,8 +455,8 @@ const DemoTasks = ({
                             dragOver={dragOverTaskId === task.id && draggedTaskId !== task.id}
                             onDragStart={() => handleDragStart(task.id)}
                             onDragEnd={handleDragEnd}
-                            onUpdateTask={onUpdateTask}
-                            onDeleteTask={onDeleteTask}
+                            onUpdateTask={(changes) => onUpdateTask(task.id, changes)}
+                            onDeleteTask={() => onDeleteTask(task.id)}
                         />
                     </div>
                 ))}
