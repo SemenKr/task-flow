@@ -31,6 +31,8 @@ type TaskItemPropsType = {
     dragOver?: boolean
     onDragStart?: () => void
     onDragEnd?: () => void
+    onUpdateTask?: (changes: Partial<DomainTask>) => Promise<void> | void
+    onDeleteTask?: () => Promise<void> | void
 }
 
 type TaskFormValues = {
@@ -45,6 +47,11 @@ type TaskFormValues = {
 const toDateTimeInputValue = (value: string | null) => value ? value.slice(0, 16) : ''
 
 const toApiDateTimeValue = (value: string) => value ? `${value}:00` : null
+
+const taskDateTimeFormatter = new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+})
 
 const createFormValues = (task: DomainTask): TaskFormValues => ({
     title: task.title,
@@ -63,18 +70,38 @@ export const TaskItem = ({
     dragOver = false,
     onDragStart,
     onDragEnd,
+    onUpdateTask,
+    onDeleteTask,
 }: TaskItemPropsType) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
     const [formValues, setFormValues] = useState<TaskFormValues>(() => createFormValues(task))
+    const isCoarsePointer =
+        typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(pointer: coarse)').matches
 
-    const [updateTask] = useUpdateTaskMutation()
-    const [removeTask] = useRemoveTaskMutation()
+    const [updateTask, {isLoading: isUpdating}] = useUpdateTaskMutation()
+    const [removeTask, {isLoading: isDeleting}] = useRemoveTaskMutation()
+    const isUpdatingTask = !onUpdateTask && isUpdating
+    const isDeletingTask = !onDeleteTask && isDeleting
 
     const changeTaskStatus = (checked: boolean) => {
+        if (isUpdatingTask) return
         const status = checked ? TaskStatus.Completed : TaskStatus.New
-        const model = createTaskModel(task, { status })
-        void updateTask({ taskId: task.id, todolistId, model })
+        const changes: Partial<DomainTask> = {status}
+
+        if (onUpdateTask) {
+            void Promise.resolve(onUpdateTask(changes)).catch((error) => {
+                toast.error(getTaskActionErrorMessage('update', error))
+                console.error('Error updating task status:', error)
+            })
+            return
+        }
+
+        const model = createTaskModel(task, changes)
+        void updateTask({taskId: task.id, todolistId, model})
             .unwrap()
             .catch((error) => {
                 toast.error(getTaskActionErrorMessage('update', error))
@@ -110,11 +137,7 @@ export const TaskItem = ({
 
     const formatDate = (value: string | null) => {
         if (!value) return null
-        return new Intl.DateTimeFormat('en', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        }).format(new Date(value))
+        return taskDateTimeFormatter.format(new Date(value))
     }
 
     const createdAt = formatDate(task.addedDate)
@@ -126,13 +149,21 @@ export const TaskItem = ({
         setFormValues(createFormValues(task))
     }, [task])
 
-    const handleDelete = async () => {
+    const handleDelete = async (): Promise<boolean> => {
+        if (isDeletingTask) return false
+
         try {
-            await removeTask({ taskId: task.id, todolistId }).unwrap()
+            if (onDeleteTask) {
+                await onDeleteTask()
+            } else {
+                await removeTask({taskId: task.id, todolistId}).unwrap()
+            }
             toast.success('Task deleted')
+            return true
         } catch (error) {
             toast.error(getTaskActionErrorMessage('delete', error))
             console.error('Error deleting task:', error)
+            return false
         }
     }
 
@@ -146,23 +177,30 @@ export const TaskItem = ({
     }
 
     const handleSave = async () => {
+        if (isUpdatingTask) return
+
         const trimmedTitle = formValues.title.trim()
         if (!trimmedTitle) {
             toast.error('Task title cannot be empty')
             return
         }
 
-        const model = createTaskModel(task, {
+        const changes: Partial<DomainTask> = {
             title: trimmedTitle,
             description: formValues.description.trim() || null,
             status: Number(formValues.status) as TaskStatus,
             priority: Number(formValues.priority) as TaskPriority,
             startDate: toApiDateTimeValue(formValues.startDate),
             deadline: toApiDateTimeValue(formValues.deadline),
-        })
+        }
 
         try {
-            await updateTask({ taskId: task.id, todolistId, model }).unwrap()
+            if (onUpdateTask) {
+                await onUpdateTask(changes)
+            } else {
+                const model = createTaskModel(task, changes)
+                await updateTask({taskId: task.id, todolistId, model}).unwrap()
+            }
             toast.success('Task updated')
             setIsDialogOpen(false)
         } catch (error) {
@@ -180,12 +218,14 @@ export const TaskItem = ({
                     dragOver && 'bg-primary/6 ring-1 ring-primary/20'
                 )}
             >
-                {reorderEnabled ? (
+                {reorderEnabled && !isCoarsePointer ? (
                     <div
                         draggable
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
                         className="mt-1 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing"
+                        title="Drag with mouse to reorder"
+                        aria-hidden="true"
                     >
                         <GripVertical className="h-4 w-4" />
                     </div>
@@ -194,58 +234,51 @@ export const TaskItem = ({
                 <Checkbox
                     checked={isTaskCompleted}
                     onCheckedChange={(checked) => changeTaskStatus(checked === true)}
+                    disabled={isUpdatingTask}
                     id={task.id}
                     aria-label={`Toggle completion for task ${task.title}`}
                     className="mt-1 shrink-0"
                 />
 
-                <div
-                    className={cn(
-                        'min-w-0 flex-1 transition-all duration-200',
-                        hasDetails && 'cursor-pointer group-hover:translate-x-0.5 active:scale-[0.995]'
-                    )}
-                    onClick={toggleTaskDetails}
-                    onKeyDown={(event) => {
-                        if (!hasDetails) return
-                        if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            toggleTaskDetails()
-                        }
-                    }}
-                    role={hasDetails ? 'button' : undefined}
-                    tabIndex={hasDetails ? 0 : undefined}
-                    aria-expanded={hasDetails ? isDetailsOpen : undefined}
-                >
+                <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                        <div className="flex min-w-0 flex-1 items-start gap-2">
-                            <div
-                                className={`min-w-0 flex-1 select-none break-words text-sm font-medium leading-6 transition-all ${
-                                isTaskCompleted
-                                    ? 'line-through text-muted-foreground/70'
-                                    : 'text-foreground'
-                            }`}
-                            >
-                                {task.title}
+                        <button
+                            type="button"
+                            className={cn(
+                                'min-w-0 flex-1 bg-transparent p-0 text-left transition-all duration-200',
+                                hasDetails && 'cursor-pointer group-hover:translate-x-0.5 active:scale-[0.995]'
+                            )}
+                            onClick={toggleTaskDetails}
+                            disabled={!hasDetails}
+                            aria-expanded={hasDetails ? isDetailsOpen : undefined}
+                        >
+                            <div className="flex min-w-0 flex-1 items-start gap-2">
+                                <div
+                                    className={`min-w-0 flex-1 select-none break-words text-sm font-medium leading-6 transition-all ${
+                                    isTaskCompleted
+                                        ? 'line-through text-muted-foreground/70'
+                                        : 'text-foreground'
+                                }`}
+                                >
+                                    {task.title}
+                                </div>
+                                {hasDetails ? (
+                                    <span className="mt-1 shrink-0 text-muted-foreground">
+                                        {isDetailsOpen ? (
+                                            <ChevronUp className="h-4 w-4 transition-transform duration-200" />
+                                        ) : (
+                                            <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                        )}
+                                    </span>
+                                ) : null}
                             </div>
-                            {hasDetails ? (
-                                <span className="mt-1 shrink-0 text-muted-foreground">
-                                    {isDetailsOpen ? (
-                                        <ChevronUp className="h-4 w-4 transition-transform duration-200" />
-                                    ) : (
-                                        <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-                                    )}
-                                </span>
-                            ) : null}
-                        </div>
+                        </button>
 
-                        <div className="flex shrink-0 gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                        <div className="flex shrink-0 gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={(event) => {
-                                    event.stopPropagation()
-                                    setIsDialogOpen(true)
-                                }}
+                                onClick={() => setIsDialogOpen(true)}
                                 className="h-8 w-8 shrink-0 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                                 aria-label="Edit task"
                             >
@@ -254,10 +287,8 @@ export const TaskItem = ({
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={(event) => {
-                                    event.stopPropagation()
-                                    void handleDelete()
-                                }}
+                                disabled={isDeletingTask}
+                                onClick={() => setIsDeleteDialogOpen(true)}
                                 className="h-8 w-8 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                                 aria-label="Delete task"
                             >
@@ -422,6 +453,34 @@ export const TaskItem = ({
                         </Button>
                         <Button onClick={() => void handleSave()}>
                             Save changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="border-border/60 sm:max-w-md">
+                    <DialogHeader className="text-left">
+                        <DialogTitle>Delete task?</DialogTitle>
+                        <DialogDescription>
+                            This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            disabled={isDeletingTask}
+                            onClick={() => {
+                                void handleDelete().then((isDeleted) => {
+                                    if (isDeleted) {
+                                        setIsDeleteDialogOpen(false)
+                                    }
+                                })
+                            }}
+                        >
+                            {isDeletingTask ? 'Deleting...' : 'Delete'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
