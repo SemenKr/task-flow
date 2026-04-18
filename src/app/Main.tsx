@@ -49,6 +49,13 @@ export const TodolistsPage = () => {
     const [tasksStatsByListId, setTasksStatsByListId] = useState<TaskStatsByListId>({})
     const [pendingFocusListId, setPendingFocusListId] = useState<string | null>(null)
     const [isCreatingDemoWorkspace, setIsCreatingDemoWorkspace] = useState(false)
+    const [isTouchDevice, setIsTouchDevice] = useState(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+            return false
+        }
+
+        return window.matchMedia('(pointer: coarse)').matches
+    })
 
     const hasTodolists = (todolists?.length ?? 0) > 0
     const {isOnboardingVisible, completeOnboarding, dismissOnboarding} = useTodolistsOnboarding(hasTodolists)
@@ -77,13 +84,13 @@ export const TodolistsPage = () => {
         [visibleTodolists],
     )
     const dragListsEnabled = useMemo(
-        () => canReorderTodolists(
+        () => !isTouchDevice && canReorderTodolists(
             sortValue,
             normalizedSearchValue,
             isReorderingLists,
             hasPendingOptimisticTodolist,
         ),
-        [hasPendingOptimisticTodolist, isReorderingLists, normalizedSearchValue, sortValue],
+        [hasPendingOptimisticTodolist, isReorderingLists, isTouchDevice, normalizedSearchValue, sortValue],
     )
     const {
         displayTodolists,
@@ -104,6 +111,29 @@ export const TodolistsPage = () => {
         selectedListId,
         setSelectedListId,
     })
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+            return
+        }
+
+        const mediaQuery = window.matchMedia('(pointer: coarse)')
+        const handleChange = () => {
+            setIsTouchDevice(mediaQuery.matches)
+        }
+
+        handleChange()
+
+        if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', handleChange)
+
+            return () => mediaQuery.removeEventListener('change', handleChange)
+        }
+
+        mediaQuery.addListener(handleChange)
+
+        return () => mediaQuery.removeListener(handleChange)
+    }, [])
 
     useEffect(() => {
         setTasksStatsByListId((prev) => syncTaskStatsByListId(prev, todolists))
@@ -256,7 +286,7 @@ export const TodolistsPage = () => {
     return (
         <main className="relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 -z-10 h-48 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_46%),radial-gradient(circle_at_top_right,rgba(251,191,36,0.08),transparent_30%)]" />
-            <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[288px_minmax(0,1fr)] lg:px-8 lg:py-6">
+            <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 [&>*]:min-w-0 sm:px-6 lg:grid-cols-[288px_minmax(0,1fr)] lg:px-8 lg:py-6">
                 <TodolistsSidebar
                     onAddTodolist={handleAddTodolist}
                     filters={sidebarFilters}
@@ -270,10 +300,11 @@ export const TodolistsPage = () => {
                     {hasTodolists ? (
                         <div className="dashboard-grid">
                             {displayTodolists.map((list) => (
-                                <div key={list.id} id={`list-card-${list.id}`}>
+                                <div key={list.id} id={`list-card-${list.id}`} className="min-w-0">
                                     <TodolistItem
                                         todolist={list}
                                         globalTaskFilters={globalTaskFilters}
+                                        allowTaskReorder={!isTouchDevice}
                                         matchedTasksCount={tasksStatsByListId[list.id]?.matched}
                                         totalTasksCount={tasksStatsByListId[list.id]?.total}
                                         selected={selectedListId === list.id}

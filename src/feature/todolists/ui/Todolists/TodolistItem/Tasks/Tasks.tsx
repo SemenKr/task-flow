@@ -15,6 +15,7 @@ import type {TaskStats} from '@/app/main/model/types';
 type TasksPropsType = {
     todolist: DomainTodolist
     globalTaskFilters: GlobalTaskFilters
+    allowTaskReorder?: boolean
     onStatsChange?: (stats: TaskStats) => void
 }
 
@@ -158,7 +159,7 @@ const matchesDueFilter = (due: GlobalTaskFilters['due'], deadline: string | null
     return true
 }
 
-export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsType) => {
+export const Tasks = ({todolist, globalTaskFilters, allowTaskReorder = true, onStatsChange}: TasksPropsType) => {
     const { id, filter } = todolist
     const hasActiveGlobalFilters = Boolean(
         globalTaskFilters.query.trim() ||
@@ -254,7 +255,7 @@ export const Tasks = ({todolist, globalTaskFilters, onStatsChange}: TasksPropsTy
         })
     }, [completedTasksCount, matchedTasksCount, onStatsChange, overdueTasksCount, todayTasksCount, totalTasksCount])
 
-    const reorderEnabled = filter === 'all' && !hasActiveGlobalFilters
+    const reorderEnabled = allowTaskReorder && filter === 'all' && !hasActiveGlobalFilters
 
     const tasksToRender = orderedTaskIds
         ? [...(filteredTasks ?? [])].sort(

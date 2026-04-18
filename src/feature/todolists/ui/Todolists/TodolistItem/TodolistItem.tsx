@@ -19,6 +19,7 @@ import type {TaskStats} from '@/app/main/model/types';
 type TodolistItemPropsType = {
     todolist: DomainTodolist
     globalTaskFilters: GlobalTaskFilters
+    allowTaskReorder?: boolean
     matchedTasksCount?: number
     totalTasksCount?: number
     selected?: boolean
@@ -29,6 +30,7 @@ type TodolistItemPropsType = {
 export const TodolistItem = ({
     todolist,
     globalTaskFilters,
+    allowTaskReorder = true,
     matchedTasksCount,
     totalTasksCount,
     selected = false,
@@ -252,6 +254,7 @@ export const TodolistItem = ({
                     <Tasks
                         todolist={todolist}
                         globalTaskFilters={globalTaskFilters}
+                        allowTaskReorder={allowTaskReorder}
                         onStatsChange={onTasksStatsChange}
                     />
                 </section>
