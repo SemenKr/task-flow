@@ -697,6 +697,9 @@ export const DemoMain = () => {
                                         }
                                         onDeleteTodolist={() => deleteList(list.id)}
                                         onAddTask={(title) => addTask(list.id, title)}
+                                        onSetFilter={(filter) =>
+                                            updateList(list.id, (currentList) => ({...currentList, filter}))
+                                        }
                                         onUpdateTask={(taskId, changes) => updateTask(list.id, taskId, changes)}
                                         onDeleteTask={(taskId) => deleteTask(list.id, taskId)}
                                         onReorderTasks={(taskIds) => reorderTasks(list.id, taskIds)}

@@ -13,7 +13,7 @@ import {useEffect, useState} from 'react';
 import {toast} from 'sonner';
 import type {TaskStats} from '@/app/main/model/types';
 
-type TasksPropsType = {
+export type TasksProps = {
     todolist: DomainTodolist
     globalTaskFilters: GlobalTaskFilters
     tasks?: DomainTask[]
@@ -173,7 +173,7 @@ export const Tasks = ({
     onDeleteTask,
     onReorderTasks,
     onStatsChange,
-}: TasksPropsType) => {
+}: TasksProps) => {
     const { id, filter } = todolist
     const isLocalTasksMode = Array.isArray(localTasks)
     const hasActiveGlobalFilters = Boolean(

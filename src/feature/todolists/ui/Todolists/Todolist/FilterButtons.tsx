@@ -2,13 +2,23 @@ import {useAppDispatch} from '@/common/hooks/useAppDispatch';
 import {Button} from '@/common/components/ui';
 import {todolistsApi} from '@/feature/todolists/api/todolistsApi';
 import type {FilterValues} from '@/feature/todolists/libs/types';
-import {FilterButtonsProps} from '@/types/types'
+import type {DomainTodolist} from '@/feature/todolists/libs/types';
 
-export const FilterButtons = ({ todolist }: FilterButtonsProps) => {
+type FilterButtonsProps = {
+    todolist: DomainTodolist
+    onSetFilter?: (filter: FilterValues) => Promise<void> | void
+}
+
+export const FilterButtons = ({ todolist, onSetFilter }: FilterButtonsProps) => {
     const { id, filter } = todolist
     const dispatch = useAppDispatch()
 
     const changeFilter = (filter: FilterValues) => {
+        if (onSetFilter) {
+            void Promise.resolve(onSetFilter(filter))
+            return
+        }
+
         dispatch(
             todolistsApi.util.updateQueryData("getTodolists", undefined, (state) => {
                 const todolist = state.find((todolist) => todolist.id === id)

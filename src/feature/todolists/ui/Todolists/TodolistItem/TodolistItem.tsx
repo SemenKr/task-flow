@@ -8,7 +8,7 @@ import {CreateItemForm} from '@/CreateItemForm.tsx';
 import {useAddTaskMutation} from '@/feature/todolists/api/tasksApi';
 import type {DomainTask} from '@/feature/todolists/api/tasksApi.types';
 import {useRemoveTodolistMutation, useUpdateTodolistTitleMutation} from '@/feature/todolists/api/todolistsApi';
-import type {DomainTodolist, GlobalTaskFilters} from '@/feature/todolists/libs/types';
+import type {DomainTodolist, FilterValues, GlobalTaskFilters} from '@/feature/todolists/libs/types';
 import {FilterButtons} from '@/feature/todolists/ui/Todolists/Todolist/FilterButtons.tsx';
 import {Tasks} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/Tasks.tsx';
 import {getTaskActionErrorMessage} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/taskActionErrorMessage';
@@ -25,6 +25,7 @@ type TodolistItemPropsType = {
     onRenameTodolist?: (title: string) => Promise<void> | void
     onDeleteTodolist?: () => Promise<void> | void
     onAddTask?: (title: string) => Promise<void> | void
+    onSetFilter?: (filter: FilterValues) => Promise<void> | void
     onUpdateTask?: (taskId: string, changes: Partial<DomainTask>) => Promise<void> | void
     onDeleteTask?: (taskId: string) => Promise<void> | void
     onReorderTasks?: (orderedTaskIds: string[]) => Promise<void> | void
@@ -43,6 +44,7 @@ export const TodolistItem = ({
     onRenameTodolist,
     onDeleteTodolist,
     onAddTask,
+    onSetFilter,
     onUpdateTask,
     onDeleteTask,
     onReorderTasks,
@@ -77,7 +79,10 @@ export const TodolistItem = ({
         if (isRemovingTodolistWithFallback) return
 
         if (onDeleteTodolist) {
-            void Promise.resolve(onDeleteTodolist())
+            void Promise.resolve(onDeleteTodolist()).catch((error) => {
+                toast.error('Failed to delete list')
+                console.error('Error deleting todolist:', error)
+            })
             return
         }
 
@@ -281,6 +286,7 @@ export const TodolistItem = ({
                     </p>
                     <FilterButtons
                         todolist={todolist}
+                        onSetFilter={onSetFilter}
                     />
                 </section>
 
