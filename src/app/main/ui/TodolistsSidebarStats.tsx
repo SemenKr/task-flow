@@ -1,5 +1,5 @@
 import {Badge} from '@/common/components/ui/badge';
-import type {TaskStats} from '../model/types';
+import type {TaskStats} from '@/feature/todolists/model/types';
 
 type TodolistsSidebarStatsProps = {
     stats: TaskStats

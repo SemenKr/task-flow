@@ -2,7 +2,7 @@ import {act, fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {DesktopTodolistsSidebarTaskFilters} from './TodolistsSidebarTaskFilters';
-import type {SidebarFiltersModel} from '../model/types';
+import type {SidebarFiltersModel} from '@/feature/todolists/model/types';
 
 const createFiltersModel = (overrides: Partial<SidebarFiltersModel> = {}): SidebarFiltersModel => ({
     globalTaskFilters: {

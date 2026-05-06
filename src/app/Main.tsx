@@ -12,19 +12,19 @@ import {
     getActiveGlobalTaskFiltersCount,
     getGlobalTaskFilters,
     hasActiveGlobalTaskFilters,
-} from '@/app/main/lib/globalTaskFilters';
-import {aggregateTaskStats, syncTaskStatsByListId, upsertTaskStats} from '@/app/main/lib/taskStats';
+} from '@/feature/todolists/libs/globalTaskFilters';
+import {aggregateTaskStats, syncTaskStatsByListId, upsertTaskStats} from '@/feature/todolists/libs/taskStats';
 import {
     canReorderTodolists,
     filterAndSortTodolists,
     hasPendingOptimisticTodolists,
     normalizeListSearchValue,
-} from '@/app/main/lib/todolists';
-import {useTodolistsOnboarding} from '@/app/main/lib/useTodolistsOnboarding';
-import {useSyncedSelectedList} from '@/app/main/lib/useSyncedSelectedList';
-import {useTodolistsReorder} from '@/app/main/lib/useTodolistsReorder';
-import {DEFAULT_GLOBAL_TASK_FILTERS} from '@/app/main/model/constants';
-import {DEMO_WORKSPACE} from '@/app/main/model/demo';
+} from '@/feature/todolists/libs/todolists';
+import {useTodolistsOnboarding} from '@/feature/todolists/libs/useTodolistsOnboarding';
+import {useSyncedSelectedList} from '@/feature/todolists/libs/useSyncedSelectedList';
+import {useTodolistsReorder} from '@/feature/todolists/libs/useTodolistsReorder';
+import {DEFAULT_GLOBAL_TASK_FILTERS} from '@/feature/todolists/model/constants';
+import {DEMO_WORKSPACE} from '@/feature/todolists/model/demo';
 import type {
     ListSortValue,
     SidebarFiltersModel,
@@ -32,7 +32,7 @@ import type {
     SidebarStatsModel,
     TaskStats,
     TaskStatsByListId,
-} from '@/app/main/model/types';
+} from '@/feature/todolists/model/types';
 import {TodolistsPageHeader} from '@/app/main/ui/TodolistsPageHeader';
 import {TodolistsPageSkeleton} from '@/app/main/ui/TodolistsPageSkeleton';
 import {TodolistsSidebar} from '@/app/main/ui/TodolistsSidebar';

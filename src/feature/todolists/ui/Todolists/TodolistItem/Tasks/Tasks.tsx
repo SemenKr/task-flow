@@ -11,7 +11,7 @@ import {getTaskActionErrorMessage} from '@/feature/todolists/ui/Todolists/Todoli
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {useEffect, useState} from 'react';
 import {toast} from 'sonner';
-import type {TaskStats} from '@/app/main/model/types';
+import type {TaskStats} from '@/feature/todolists/model/types';
 
 export type TasksProps = {
     todolist: DomainTodolist

@@ -1,6 +1,6 @@
 import {memo, useState} from 'react';
 import {Button} from '@/common/components/ui/button';
-import type {SidebarFiltersModel, SidebarListNavigationModel, SidebarStatsModel} from '../model/types';
+import type {SidebarFiltersModel, SidebarListNavigationModel, SidebarStatsModel} from '@/feature/todolists/model/types';
 import {MobileTodolistsSidebarTaskFilters} from './TodolistsSidebarTaskFilters';
 import {TodolistsSidebarCreateAction} from './TodolistsSidebarCreateAction';
 import {

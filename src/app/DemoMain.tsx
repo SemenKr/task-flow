@@ -3,17 +3,17 @@ import {
     getActiveGlobalTaskFiltersCount,
     getGlobalTaskFilters,
     hasActiveGlobalTaskFilters,
-} from '@/app/main/lib/globalTaskFilters'
-import {aggregateTaskStats} from '@/app/main/lib/taskStats'
+} from '@/feature/todolists/libs/globalTaskFilters'
+import {aggregateTaskStats} from '@/feature/todolists/libs/taskStats'
 import {
     applyPreviewOrder,
     canReorderTodolists,
     filterAndSortTodolists,
     normalizeListSearchValue,
-} from '@/app/main/lib/todolists'
-import {useSyncedSelectedList} from '@/app/main/lib/useSyncedSelectedList'
-import {DEFAULT_GLOBAL_TASK_FILTERS} from '@/app/main/model/constants'
-import {DEMO_WORKSPACE} from '@/app/main/model/demo'
+} from '@/feature/todolists/libs/todolists'
+import {useSyncedSelectedList} from '@/feature/todolists/libs/useSyncedSelectedList'
+import {DEFAULT_GLOBAL_TASK_FILTERS} from '@/feature/todolists/model/constants'
+import {DEMO_WORKSPACE} from '@/feature/todolists/model/demo'
 import type {
     ListSortValue,
     SidebarFiltersModel,
@@ -21,7 +21,7 @@ import type {
     SidebarStatsModel,
     TaskStats,
     TaskStatsByListId,
-} from '@/app/main/model/types'
+} from '@/feature/todolists/model/types'
 import {TodolistsPageHeader} from '@/app/main/ui/TodolistsPageHeader'
 import {TodolistsSidebar} from '@/app/main/ui/TodolistsSidebar'
 import {Badge} from '@/common/components/ui/badge'

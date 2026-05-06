@@ -1,6 +1,6 @@
 import {memo} from 'react';
 import {Card, CardContent} from '@/common/components/ui/card';
-import type {SidebarFiltersModel, SidebarListNavigationModel, SidebarStatsModel} from '../model/types';
+import type {SidebarFiltersModel, SidebarListNavigationModel, SidebarStatsModel} from '@/feature/todolists/model/types';
 import {DesktopTodolistsSidebarTaskFilters} from './TodolistsSidebarTaskFilters';
 import {TodolistsSidebarCreateAction} from './TodolistsSidebarCreateAction';
 import {TodolistsSidebarListNavigation} from './TodolistsSidebarListNavigation';

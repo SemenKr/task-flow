@@ -7,14 +7,14 @@ import {Badge} from '@/common/components/ui/badge';
 import {cn} from '@/common/lib/utils';
 import {SlidersHorizontal, X} from 'lucide-react';
 import {useEffect, useId, useMemo, useState} from 'react';
-import {useDebouncedValue} from '../lib/useDebouncedValue';
+import {useDebouncedValue} from '@/feature/todolists/libs/useDebouncedValue';
 import {
     DEFAULT_GLOBAL_TASK_FILTERS,
     GLOBAL_DUE_OPTIONS,
     GLOBAL_PRIORITY_OPTIONS,
     GLOBAL_STATUS_OPTIONS,
-} from '../model/constants';
-import type {SidebarFiltersModel} from '../model/types';
+} from '@/feature/todolists/model/constants';
+import type {SidebarFiltersModel} from '@/feature/todolists/model/types';
 
 const createOptionValueGuard = <T extends string>(options: ReadonlyArray<{ value: T }>) => {
     const optionValues = new Set(options.map(({ value }) => value))

@@ -1,4 +1,4 @@
-import type {SidebarFiltersModel, SidebarListNavigationModel, SidebarStatsModel} from '../model/types';
+import type {SidebarFiltersModel, SidebarListNavigationModel, SidebarStatsModel} from '@/feature/todolists/model/types';
 import {DesktopTodolistsSidebar} from './DesktopTodolistsSidebar';
 import {MobileTodolistsSidebar} from './MobileTodolistsSidebar';
 

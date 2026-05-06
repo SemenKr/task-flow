@@ -1,7 +1,7 @@
 import {DragEvent, memo} from 'react';
 import {cn} from '@/common/lib/utils';
 import {ChevronRight, GripVertical} from 'lucide-react';
-import type {SidebarListNavigationModel} from '../model/types';
+import type {SidebarListNavigationModel} from '@/feature/todolists/model/types';
 
 type TodolistsSidebarListNavigationSummaryProps = {
     listCount: number

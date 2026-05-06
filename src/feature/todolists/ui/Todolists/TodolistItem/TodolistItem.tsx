@@ -15,7 +15,7 @@ import {getTaskActionErrorMessage} from '@/feature/todolists/ui/Todolists/Todoli
 import {Check, Edit2, FolderKanban, Trash2, X} from 'lucide-react';
 import {KeyboardEvent, useEffect, useState} from 'react';
 import {toast} from 'sonner';
-import type {TaskStats} from '@/app/main/model/types';
+import type {TaskStats} from '@/feature/todolists/model/types';
 
 type TodolistItemPropsType = {
     todolist: DomainTodolist

@@ -2,7 +2,7 @@ import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {describe, expect, it, vi} from 'vitest';
 import {TodolistsSidebarListNavigation} from './TodolistsSidebarListNavigation';
-import type {SidebarListNavigationModel} from '../model/types';
+import type {SidebarListNavigationModel} from '@/feature/todolists/model/types';
 
 const createNavigationModel = (overrides: Partial<SidebarListNavigationModel> = {}): SidebarListNavigationModel => ({
     searchValue: '',

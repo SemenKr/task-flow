@@ -1,8 +1,8 @@
 import {Input} from '@/common/components/ui/input';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/common/components/ui/select';
 import {Search} from 'lucide-react';
-import {LIST_SORT_OPTIONS} from '../model/constants';
-import type {ListSortValue} from '../model/types';
+import {LIST_SORT_OPTIONS} from '@/feature/todolists/model/constants';
+import type {ListSortValue} from '@/feature/todolists/model/types';
 
 type TodolistsSidebarSortControlsProps = {
     searchValue: string
