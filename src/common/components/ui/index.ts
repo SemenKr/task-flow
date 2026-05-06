@@ -1,6 +1,15 @@
 // Ваши кастомные компоненты в ui
 export { CustomButton as Button } from './custom-button'; // ← переименовываем обратно
 export { Title } from './title';
+export {
+  TypographyH1,
+  TypographyH2,
+  TypographyH3,
+  TypographyLead,
+  TypographyMuted,
+  TypographyP,
+  TypographySmall,
+} from './typography';
 
 // Shadcn/ui компоненты
 export { Alert } from './alert';

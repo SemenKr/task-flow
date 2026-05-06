@@ -2,25 +2,38 @@
 
 ## Workflow
 
-- plan → implement → review
-- Keep changes minimal and local
-- Do not refactor unless explicitly requested
+- Follow: plan → implement → review.
+- For non-trivial tasks, briefly explain the plan before editing code.
+- Keep changes minimal, focused, and local.
+- Do not refactor unless explicitly requested or required to complete the task safely.
+- Prefer the simplest reliable solution over a more abstract one.
 
 ## Source of truth
 
-- Use project codebase first
-- Use docs if available
-- Use RAG if configured
-- Prefer disabling unsupported features on mobile over introducing complex partial implementations.
- 
+- Use the project codebase as the primary source of truth.
+- Use official docs when behavior depends on a library, framework, API, or version.
+- Use RAG if configured and relevant to the task.
+- Prefer disabling unsupported mobile features over introducing complex partial implementations.
+
 ## Validation
 
-- Always run lint after changes
-- Do not run full build unless necessary
+- Run lint after code changes when a lint script exists.
+- Do not run a full build unless necessary, requested, or the change affects build/runtime configuration.
+- If validation cannot be run, explain why and mention the residual risk.
+- For UI changes in shadcn/ui projects, review the result for consistency with existing shadcn/ui components, variants, spacing, and tokens.
+
 
 ## Language
 
-- User may write in Russian
-- Think and process in English
-- Code and technical terms → English
-- Explanations → Russian if user uses Russian
+- The user may write in Russian.
+- Think and reason internally in English.
+- Keep code, identifiers, comments, commits, and technical terms in English.
+- Explain decisions in Russian when the user writes in Russian.
+- 
+## Frontend / UI
+
+- Prefer existing project UI components and patterns before creating new ones.
+- When the project uses shadcn/ui, check new or changed UI against shadcn/ui conventions.
+- Reuse shadcn/ui components where appropriate instead of recreating them manually.
+- Do not add new shadcn/ui components unless they are needed for the task.
+- Keep styling consistent with existing Tailwind/shadcn tokens and variants.
