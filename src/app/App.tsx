@@ -1,9 +1,9 @@
 import './App.css'
 import {setIsAuthInitializedAC, setIsDemoModeAC, setIsLoggedInAC} from '@/app/appSlice';
 import {Header} from '@/app/layout/Header.tsx';
+import {Routing} from '@/app/routing';
 import {ResultCode} from '@/common/enums';
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
-import {Routing} from '@/common/routing';
 import {getDemoModeEnabled} from '@/common/utils/demoMode';
 import {getStoredAuthToken} from '@/common/utils/authStorage';
 import {ThemeProvider} from '@/components/theme-provider.tsx';

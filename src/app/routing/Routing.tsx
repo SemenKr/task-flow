@@ -2,6 +2,7 @@ import {selectIsAuthInitialized, selectIsDemoMode, selectIsLoggedIn} from '@/app
 import {ProtectedRoute} from '@/common/components/ProtectedRoute/ProtectedRoute';
 import {Skeleton} from '@/common/components/ui/skeleton';
 import {useAppSelector} from '@/common/hooks/useAppSelector';
+import {Path} from '@/common/routing';
 import {lazy, Suspense} from 'react';
 import {Route, Routes} from 'react-router'
 import {TodolistsPageSkeleton} from '@/app/main/ui/TodolistsPageSkeleton';
@@ -47,12 +48,6 @@ const RouteSkeleton = () => (
         </div>
     </div>
 )
-
-export const Path = {
-    Main: '/',
-    Login: 'login',
-    NotFound: '*',
-} as const
 
 export const Routing = () => {
     const isLoggedIn = useAppSelector(selectIsLoggedIn)
