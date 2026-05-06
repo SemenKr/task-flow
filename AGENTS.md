@@ -37,3 +37,23 @@
 - Reuse shadcn/ui components where appropriate instead of recreating them manually.
 - Do not add new shadcn/ui components unless they are needed for the task.
 - Keep styling consistent with existing Tailwind/shadcn tokens and variants.
+- 
+## Architecture
+
+- Keep app-level code focused on bootstrap, providers, store setup, routing, and page composition.
+- Keep feature business logic inside the owning feature folder.
+- Do not place feature-specific helpers, API logic, or domain logic inside `src/app`.
+- Shared/common components must not depend on app slices, feature APIs, or feature-specific state.
+- If a shared component needs app/feature behavior, pass state and handlers through props or move the component closer to its owner.
+- Avoid fragile file and folder names, including quotes, spaces, and special characters.
+- Keep root-level `src` files limited to entrypoints and truly global infrastructure.
+- Place reusable UI in `common/components` or the configured shadcn/ui location.
+- Place feature-specific UI, hooks, types, and helpers inside the owning feature.
+
+## shadcn/ui
+
+- Keep `components.json` aliases synchronized with the actual project structure.
+- Before adding or changing UI, check whether the project uses shadcn/ui components.
+- Reuse existing shadcn/ui components and variants where appropriate.
+- Do not manually recreate components that already exist in shadcn/ui unless there is a clear project-specific reason.
+- Keep Tailwind classes consistent with existing shadcn tokens, spacing, variants, and component patterns.
