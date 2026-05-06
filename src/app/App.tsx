@@ -1,6 +1,6 @@
 import './App.css'
 import {setIsAuthInitializedAC, setIsDemoModeAC, setIsLoggedInAC} from '@/app/appSlice';
-import {Header} from '@/common/components/layout/Header.tsx';
+import {Header} from '@/app/layout/Header.tsx';
 import {ResultCode} from '@/common/enums';
 import {useAppDispatch} from '@/common/hooks/useAppDispatch';
 import {Routing} from '@/common/routing';
