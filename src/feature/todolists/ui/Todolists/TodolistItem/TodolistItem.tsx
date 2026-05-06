@@ -4,7 +4,7 @@ import {Card, CardContent, CardHeader} from '@/common/components/ui/card.tsx';
 import {Input} from '@/common/components/ui/input.tsx';
 import {cn} from '@/common/lib/utils.ts';
 import {Title} from '@/common/components/ui/title.tsx';
-import {CreateItemForm} from '@/CreateItemForm.tsx';
+import {CreateItemForm} from '@/common/components/CreateItemForm/CreateItemForm.tsx';
 import {useAddTaskMutation} from '@/feature/todolists/api/tasksApi';
 import type {DomainTask} from '@/feature/todolists/api/tasksApi.types';
 import {useRemoveTodolistMutation, useUpdateTodolistTitleMutation} from '@/feature/todolists/api/todolistsApi';
