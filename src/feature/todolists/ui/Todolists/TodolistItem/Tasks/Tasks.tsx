@@ -6,7 +6,7 @@ import {useGetTasksQuery, useReorderTaskMutation} from '@/feature/todolists/api/
 import type {DomainTask} from '@/feature/todolists/api/tasksApi.types';
 import type {DomainTodolist, GlobalTaskFilters} from '@/feature/todolists/libs/types';
 import {EmptyState} from '@/feature/todolists/ui/Todolists/Todolist/EmptyState.tsx';
-import {TaskItem} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/TaskItem\'/TaskItem.tsx';
+import {TaskItem} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/TaskItem/TaskItem.tsx';
 import {getTaskActionErrorMessage} from '@/feature/todolists/ui/Todolists/TodolistItem/Tasks/taskActionErrorMessage';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {useEffect, useState} from 'react';
